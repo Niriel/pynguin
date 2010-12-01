@@ -3,16 +3,20 @@ Created on Nov 9, 2010
 
 @author: delforge
 '''
+
 import unittest
-import size
-import box
+from gui.layout import size
+from gui.layout import box
+from gui.layout.padding import Padding
+from gui.layout.parentable import Parentable
+from gui.layout.cell import Cell
 
 
 class TestDocTest(unittest.TestCase):
     def testDocTest(self):
         """module box passes its doctests."""
         import doctest
-        failures, tests = doctest.testmod(m=size)
+        failures, tests = doctest.testmod(m=box)
         del tests # Just to remove the eclipse warning on the unused variable.
         self.assertEquals(failures, 0)
 
@@ -53,12 +57,13 @@ class TestHomothecy(unittest.TestCase):
 
 
 class TestBox(unittest.TestCase):
-    class MockWidget(object):
-        """A pseudo widget implementing only what I need for this test."""
+    class MockWidget(Parentable):
+        """A pseudo padded implementing only what I need for this test."""
         def __init__(self, width, height):
+            Parentable.__init__(self)
             self.width = width
             self.height = height
-        def computeRequestedSize(self):
+        def requestSize(self):
             self.requested_size = size.SizeRequisition(self.width, self.height)
         def allocateSize(self, allocated_size):
             self.allocated_size = allocated_size
@@ -77,61 +82,49 @@ class TestBox(unittest.TestCase):
 
     def testAddChild(self):
         """Box.addChild does its job."""
+        child = TestBox.MockWidget(0, 0)
         # Non-homogeneous.
         my_box = box.Box(0, False)
-        my_box.addChild(None, 'v', '')
-        self.assertFalse(my_box.children[0].expand_width)
-        self.assertTrue(my_box.children[0].expand_height)
+        my_box.addChild(child, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
         my_box = box.Box(0, False)
-        my_box.addChild(None, 'h', '')
-        self.assertTrue(my_box.children[0].expand_width)
-        self.assertFalse(my_box.children[0].expand_height)
+        my_box.addChild(child, Cell.EXPAND_PADDING, Cell.EXPAND_NOT)
         my_box = box.Box(0, False)
-        my_box.addChild(None, 'hv', '')
-        self.assertTrue(my_box.children[0].expand_width)
-        self.assertTrue(my_box.children[0].expand_height)
+        my_box.addChild(child, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
         # Homogeneous.
         my_box = box.Box(0, True)
-        my_box.addChild(None, 'v', '')
-        self.assertFalse(my_box.children[0].expand_width)
-        self.assertTrue(my_box.children[0].expand_height)
+        my_box.addChild(child, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
         my_box = box.Box(0, True)
-        my_box.addChild(None, 'h', '')
-        self.assertTrue(my_box.children[0].expand_width)
-        self.assertFalse(my_box.children[0].expand_height)
+        my_box.addChild(child, Cell.EXPAND_PADDING, Cell.EXPAND_NOT)
         my_box = box.Box(0, True)
-        my_box.addChild(None, 'hv', '')
-        self.assertTrue(my_box.children[0].expand_width)
-        self.assertTrue(my_box.children[0].expand_height)
+        my_box.addChild(child, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
         #
-        child = ['spam']
         my_box = box.Box(0, True)
-        my_box.addChild(child, 'hv', '', 1, 2, 4, 8)
-        padded = my_box.children[0]
-        self.assertTrue(padded.widget is child)
-        self.assertEquals(padded.padding, size.Padding(1, 2, 4, 8))
+        my_box.addChild(child, Cell.EXPAND_PADDING, Cell.EXPAND_PADDED, 1, 2, 4, 8)
+        cell = my_box.cells[0]
+        self.assertTrue(cell.padded is child)
+        self.assertEquals(cell.padding, Padding(1, 2, 4, 8))
 
-    def testGetRequestedSizeHomogeneous(self):
-        """Box.computeRequestedSize is correct in the homogeneous case."""
+    def testRequestSizeHomogeneous(self):
+        """Box.requestSize is correct in the homogeneous case."""
         w1 = TestBox.MockWidget(20, 10)
         w2 = TestBox.MockWidget(40, 10)
         w3 = TestBox.MockWidget(30, 15)
-        # The widest widget is 40 pixels wide.  All will get 40 in length.
+        # The widest padded is 40 pixels wide.  All will get 40 in length.
         # 3 * 40 = 120
         # The max height is 15, we should retreive that.
         b = box.Box(7, True)
         # Add two times 7: 120+2*7=134.
         b.PRIMARY_LENGTH = 'width'
         b.SECONDARY_LENGTH = 'height'
-        b.addChild(w1, 'hv', 'hv')
-        b.addChild(w2, 'hv', '')
-        b.addChild(w3, 'hv', '')
+        b.addChild(w1, Cell.EXPAND_PADDED, Cell.EXPAND_PADDED)
+        b.addChild(w2, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
+        b.addChild(w3, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
         # No padding.
-        b.computeRequestedSize()
+        b.requestSize()
         self.assertEquals(b.requested_size, size.Size(134, 15))
 
-    def testGetRequestedSizeHeterogeneous(self):
-        """Box.computeRequestedSize is correct in the heterogeneous case."""
+    def testRequestSizeHeterogeneous(self):
+        """Box.requestSize is correct in the heterogeneous case."""
         w1 = TestBox.MockWidget(20, 10)
         w2 = TestBox.MockWidget(40, 10)
         w3 = TestBox.MockWidget(30, 15)
@@ -141,15 +134,15 @@ class TestBox(unittest.TestCase):
         # Add two times 7: 90 + 2 * 7 = 104.
         b.PRIMARY_LENGTH = 'width'
         b.SECONDARY_LENGTH = 'height'
-        b.addChild(w1, 'hv', 'hv')
-        b.addChild(w2, 'hv', '')
-        b.addChild(w3, 'hv', '')
+        b.addChild(w1, Cell.EXPAND_PADDED, Cell.EXPAND_PADDED)
+        b.addChild(w2, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
+        b.addChild(w3, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
         # No padding.
-        b.computeRequestedSize()
+        b.requestSize()
         self.assertEquals(b.requested_size, size.Size(104, 15))
 
     def testAllocateSizeShrinkABit(self):
-        """Box.allocateSize shrinks and leaves space to children."""
+        """Box.allocateSize shrinks and leaves space to cells."""
         w1 = TestBox.MockWidget(20, 10)
         w2 = TestBox.MockWidget(40, 10)
         w3 = TestBox.MockWidget(30, 15)
@@ -159,20 +152,21 @@ class TestBox(unittest.TestCase):
         # Total width: 90 + 14 = 104.
         b.PRIMARY_LENGTH = 'width'
         b.SECONDARY_LENGTH = 'height'
-        b.addChild(w1, 'v', '')
-        b.addChild(w2, 'v', 'v')
-        b.addChild(w3, 'v', '')
+        b.addChild(w1, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
+        b.addChild(w2, Cell.EXPAND_NOT, Cell.EXPAND_PADDED)
+        b.addChild(w3, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
         # No padding.
-        b.computeRequestedSize() # Always do that, even if you don't use.
+        b.requestSize() # Always do that, even if you don't use.
         self.assertEquals(b.requested_size, size.Size(104, 15))
-        allocated_size = size.SizeAllocation(100, 200, 70, 12)
+        allocated_size = size.SizeAllocation(size.Pos(100, 200),
+                                             size.Size(70, 12))
         b.allocateSize(allocated_size)
         # First, check that the allocated size was stored.
         self.assertTrue(b.allocated_size is allocated_size)
-        # All padded objects must measure 12 in height.
-        self.assertEquals(b.children[0].allocated_size.height, 12)
-        self.assertEquals(b.children[1].allocated_size.height, 12)
-        self.assertEquals(b.children[2].allocated_size.height, 12)
+        # All cells must measure 12 in height.
+        self.assertEquals(b.cells[0].allocated_size.height, 12)
+        self.assertEquals(b.cells[1].allocated_size.height, 12)
+        self.assertEquals(b.cells[2].allocated_size.height, 12)
         # All widgets must have their original height except the one that
         # was too big: they were not allowed to fill.
         self.assertEquals(w1.allocated_size.height, 10)
@@ -185,9 +179,9 @@ class TestBox(unittest.TestCase):
         # 30 * 0.62222 = 16.6666 = 17
         # But the last is just given the rest:
         # 56 - 12 - 25 = 19.
-        self.assertEquals(b.children[0].allocated_size.width, 12)
-        self.assertEquals(b.children[1].allocated_size.width, 25)
-        self.assertEquals(b.children[2].allocated_size.width, 19)
+        self.assertEquals(b.cells[0].allocated_size.width, 12)
+        self.assertEquals(b.cells[1].allocated_size.width, 25)
+        self.assertEquals(b.cells[2].allocated_size.width, 19)
         self.assertEquals(w1.allocated_size.width, 12)
         self.assertEquals(w2.allocated_size.width, 25)
         self.assertEquals(w3.allocated_size.width, 19)
@@ -210,13 +204,16 @@ class TestBox(unittest.TestCase):
         # Total width: 90 + 14 = 104.
         b.PRIMARY_LENGTH = 'width'
         b.SECONDARY_LENGTH = 'height'
-        b.addChild(w1, 'v', '')
-        b.addChild(w2, 'v', 'v')
-        b.addChild(w3, 'v', '')
+        b.PRIMARY_COORD = 'left'
+        b.SECONDARY_COORD = 'top'
+        b.addChild(w1, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
+        b.addChild(w2, Cell.EXPAND_NOT, Cell.EXPAND_PADDED)
+        b.addChild(w3, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
         # No padding.
-        b.computeRequestedSize() # Always do that, even if you don't use.
+        b.requestSize() # Always do that, even if you don't use.
         self.assertEquals(b.requested_size, size.Size(104, 15))
-        allocated_size = size.SizeAllocation(100, 200, 120, 20)
+        allocated_size = size.SizeAllocation(size.Pos(100, 200),
+                                             size.Size(120, 20))
         self.assertRaises(size.SizeAllocationError,
                           b.allocateSize, allocated_size)
 
@@ -233,19 +230,20 @@ class TestBox(unittest.TestCase):
         b.SECONDARY_LENGTH = 'height'
         b.PRIMARY_COORD = 'left'
         b.SECONDARY_COORD = 'top'
-        b.addChild(w1, 'v', '')
-        b.addChild(w2, 'hv', 'v')
-        b.addChild(w3, 'hv', 'h')
+        b.addChild(w1, Cell.EXPAND_NOT, Cell.EXPAND_PADDING)
+        b.addChild(w2, Cell.EXPAND_PADDING, Cell.EXPAND_PADDED)
+        b.addChild(w3, Cell.EXPAND_PADDED, Cell.EXPAND_PADDING)
         # No padding.
-        b.computeRequestedSize() # Always do that, even if you don't use.
+        b.requestSize() # Always do that, even if you don't use.
         self.assertEquals(b.requested_size, size.Size(104, 15))
-        allocated_size = size.SizeAllocation(100, 200, 120, 17)
+        allocated_size = size.SizeAllocation(size.Pos(100, 200),
+                                             size.Size(120, 17))
         b.allocateSize(allocated_size)
         #
         self.assertTrue(b.allocated_size is allocated_size)
         #
         # The first child does not expand so it keeps its width of 20.
-        # 90 (total widget) - 20 = 70 for the expandable widgets.
+        # 90 (total padded) - 20 = 70 for the expandable widgets.
         # 104 total width - 70 = 34 of fixed size.
         # The new width is 120.
         # 120 - 34 = 86 instead of 70 for the expandable widgets.
@@ -253,10 +251,10 @@ class TestBox(unittest.TestCase):
         # Child 2 has width 40.  40*86/70 = 49.14, so we say 49.
         # Child 3 has width 30.  30*86/70 = 36.86, so we say 37.
         # 49 + 37 = 86 which is indeed what we want.
-        c1, c2, c3 = b.children
-        self.assertEquals(c1.allocated_size, size.SizeAllocation(100, 200, 20, 17))
-        self.assertEquals(c2.allocated_size, size.SizeAllocation(100+20+7, 200, 49, 17))
-        self.assertEquals(c3.allocated_size, size.SizeAllocation(100+20+7+49+7, 200, 37, 17))
+        c1, c2, c3 = b.cells
+        self.assertEquals(c1.allocated_size, size.SizeAllocation(size.Pos(100, 200), size.Size(20, 17)))
+        self.assertEquals(c2.allocated_size, size.SizeAllocation(size.Pos(100+20+7, 200), size.Size(49, 17)))
+        self.assertEquals(c3.allocated_size, size.SizeAllocation(size.Pos(100+20+7+49+7, 200), size.Size(37, 17)))
 
 if __name__ == "__main__":
     unittest.main()

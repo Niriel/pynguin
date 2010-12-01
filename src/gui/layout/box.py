@@ -7,6 +7,10 @@ Created on Nov 9, 2010
 
 import size
 import container
+from cell import Cell
+
+
+__all__ = ['HBox', 'VBox']
 
 
 def Homothecy(ori_lengths, dest_length):
@@ -99,39 +103,34 @@ class Box(container.Container):
         a non-homogeneous Box.
 
         """
-        container.Container.__init__(self, spacing)
+        container.Container.__init__(self)
+        self.spacing = spacing
         self.homogeneous = homogeneous
 
-    def addChild(self, child, expand_dirs, fill_dirs, *padding):
+    def addChild(self, child, expand_width, expand_height, *padding):
         """Adds a child to the Box.
 
         child: a widget.
         
-        expand_dirs, fill_dirs, *padding: please refer to the documentation
-        of size.Padded.
+        expand_width, expand_height, *padding: please refer to the
+        documentation of cell.Cell.
 
-        It is mandatory to set at least one of the directions of expand_dirs
-        ('h', 'v' or 'hv'). If none is set, container.ContainerError is raised.
-        This is due to the fact that even if you do not want your widgets to
-        expand in the main direction of your box (Horizontal or Vertical, see
-        HBox and VBox classes), you still want the widgets to all have the same
-        height for a horizontal Box and the same width for a vertical Box.  So
-        for a Horizontal box, always set the 'v' of expand_dirs.
-
-        If the box is homogeneous then expand_dirs is set to 'hv' whatever the
-        programmer asks.  The previous check is still done though, forcing the
-        programmer to write a clean code anyway.
+        It is mandatory to set at least one of the directions of expand to
+        Cell.EXPAND_PADDING or Cell.EXPAND_PADDED.  For a horizontal box (see
+        class HBox), the vertical direction must be able to expand.  And for a
+        vertical box, it is the horizontal dimension that should be able to
+        expand.  Box being common to HBox and VBox, it simply ensures that one
+        is set.  The rest is to be checked by HBox and VBox themselves.
 
         """
-        if not expand_dirs:
+        if (expand_width, expand_height) == (Cell.EXPAND_NOT, Cell.EXPAND_NOT):
             msg = "When adding a child to a Box, at least one of the " \
                   "directions of expand_dirs must be set."
             raise container.ContainerError(msg)
-        container.Container.addChild(self, child,
-                                     expand_dirs, fill_dirs,
+        container.Container.addChild(self, child, expand_width, expand_height,
                                      *padding)
 
-    def _computeRequestedSizeHomogeneous(self):
+    def _requestSizeHomogeneous(self):
         """Compute the size needed by a homogeneous Box.
 
         In a homogeneous box, the space allocated to the widgets is the same
@@ -141,9 +140,9 @@ class Box(container.Container):
         biggest one.  This size is used for all the widgets.
 
         Be careful: when the Box is homogeneous, then make sure that all the
-        padded widgets inside have expand=True.  It will not be a problem
-        during the size requisition, but it will break during the size
-        allocation, raising AllocationSizeError.
+        cells inside have expand=True.  It will not be a problem during the
+        size requisition, but it will break during the size allocation, raising
+        AllocationSizeError.
 
         This method is generic in the sense that it doesn't know whether the
         Box is horizontal (HBox) or vertical (VBox).  See the classes HBox and
@@ -162,10 +161,10 @@ class Box(container.Container):
         PRIMARY_LENGTH = self.PRIMARY_LENGTH
         SECONDARY_LENGTH = self.SECONDARY_LENGTH
         max_size = size.SizeRequisition(0, 0)
-        for child in self.children:
-            child.computeRequestedSize()
+        for child in self.cells:
+            child.requestSize()
             max_size |= child.requested_size
-        children_nb = len(self.children)
+        children_nb = len(self.cells)
         length = children_nb * getattr(max_size, PRIMARY_LENGTH)
         thickness = getattr(max_size, SECONDARY_LENGTH)
         if children_nb >= 2:
@@ -175,7 +174,7 @@ class Box(container.Container):
         setattr(result, SECONDARY_LENGTH, thickness)
         return result
 
-    def _computeRequestedSizeHeterogeneous(self):
+    def _requestSizeHeterogeneous(self):
         """Compute the size needed by a non-homogeneous Box.
 
         In a non-homogeneous box, the size requested is just enough to hold
@@ -206,14 +205,14 @@ class Box(container.Container):
         long_name = self.PRIMARY_LENGTH
         short_name = self.SECONDARY_LENGTH
         box_long = box_short = 0
-        for child in self.children:
-            child.computeRequestedSize()
+        for child in self.cells:
+            child.requestSize()
             child_size = child.requested_size
             box_long += getattr(child_size, long_name)
             child_short = getattr(child_size, short_name)
             if child_short > box_short:
                 box_short = child_short
-        children_nb = len(self.children)
+        children_nb = len(self.cells)
         # Add the spacing between the widgets.
         if children_nb >= 2:
             box_long += (children_nb - 1) * self.spacing
@@ -222,29 +221,23 @@ class Box(container.Container):
         setattr(result, short_name, box_short)
         return result
 
-    def _computeRequestedSize(self):
+    def _requestSize(self):
         """Compute the requested size of the Box."""
         if self.homogeneous:
-            return self._computeRequestedSizeHomogeneous()
+            return self._requestSizeHomogeneous()
         else:
-            return self._computeRequestedSizeHeterogeneous()
+            return self._requestSizeHeterogeneous()
 
     def _shrink(self):
-        if not self.children:
+        if not self.cells:
             return
-        long_name = self.PRIMARY_LENGTH
-        short_name = self.SECONDARY_LENGTH
-        allocated_size = self.allocated_size
-        requested_size = self.requested_size
-        allocated_long = getattr(allocated_size, long_name)
-        allocated_short = getattr(allocated_size, short_name)
-        requested_long = getattr(requested_size, long_name)
-        if long_name == 'width':
-            long_coord_name = 'left'
-            short_coord_name = 'top'
-        else:
-            long_coord_name = 'top'
-            short_coord_name = 'left'
+        PRIMARY_LENGTH = self.PRIMARY_LENGTH
+        SECONDARY_LENGTH = self.SECONDARY_LENGTH
+        PRIMARY_COORD = self.PRIMARY_COORD
+        SECONDARY_COORD = self.SECONDARY_COORD
+        allocated_primary = getattr(self.allocated_size, PRIMARY_LENGTH)
+        allocated_secondary = getattr(self.allocated_size, SECONDARY_LENGTH)
+        requested_primary = getattr(self.requested_size, PRIMARY_LENGTH)
 
         # We're going to deal with floating point numbers here.  This is risky
         # because we're gonna loose precision. It means that we might be off by
@@ -256,16 +249,16 @@ class Box(container.Container):
         # We need to think about the spacing too.  The Box tries to maintain
         # its spacing as long as it can, but if we run out, we need to start
         # shrinking it too.
-        children_nb = len(self.children) # Minimum 1 at this point.
+        children_nb = len(self.cells) # Minimum 1 at this point.
         total_spacing = (children_nb - 1) * self.spacing
-        if requested_long > total_spacing:
+        if requested_primary > total_spacing:
             # We can keep the spacing intact.
             spacing = self.spacing
-            # There is still room for the children. Measure it.
+            # There is still room for the cells. Measure it.
             children_request = 0
-            for child in self.children:
-                children_request += getattr(child.requested_size, long_name)
-            factor = float(allocated_long - total_spacing) / children_request
+            for child in self.cells:
+                children_request += getattr(child.requested_size, PRIMARY_LENGTH)
+            factor = float(allocated_primary - total_spacing) / children_request
         else:
             # Here the children are reduced to size zero. It means that there
             # is NOTHING to display but empty space. Therefore we do not have
@@ -296,47 +289,46 @@ class Box(container.Container):
         # allocated width for that widget !
 
         cumul_long = 0
-        for child in self.children[:-1]:
+        for child in self.cells[:-1]:
             child_request = child.requested_size
-            child_long = int(round(getattr(child_request, long_name) * factor))
-            child_size = size.SizeAllocation(0, 0, 0, 0)
-            setattr(child_size, long_name, child_long)
-            setattr(child_size, short_name, allocated_short)
-            setattr(child_size, long_coord_name, cumul_long)
-            setattr(child_size, short_coord_name, 0)
+            child_long = int(round(getattr(child_request, PRIMARY_LENGTH) * factor))
+            child_size = size.SizeAllocation(size.Pos(0, 0),
+                                             size.Size(0, 0))
+            setattr(child_size, PRIMARY_LENGTH, child_long)
+            setattr(child_size, SECONDARY_LENGTH, allocated_secondary)
+            setattr(child_size, PRIMARY_COORD, cumul_long)
+            setattr(child_size, SECONDARY_COORD, 0)
             child.allocateSize(child_size)
             cumul_long += child_long + spacing
-        child = self.children[-1]
-        child_size = size.SizeAllocation(0, 0, 0, 0)
-        setattr(child_size, long_name, allocated_long - cumul_long)
-        setattr(child_size, short_name, allocated_short)
-        setattr(child_size, long_coord_name, cumul_long)
-        setattr(child_size, short_coord_name, 0)
+        child = self.cells[-1]
+        child_size = size.SizeAllocation(size.Pos(0, 0), size.Size(0, 0))
+        setattr(child_size, PRIMARY_LENGTH, allocated_primary - cumul_long)
+        setattr(child_size, SECONDARY_LENGTH, allocated_secondary)
+        setattr(child_size, PRIMARY_COORD, cumul_long)
+        setattr(child_size, SECONDARY_COORD, 0)
         child.allocateSize(child_size)
 
-    def _getExpandableIds(self, direction):
+    def _getExpandableIds(self, length_name):
         result = []
-        attribute = 'expand_%s' % direction
-        children = self.children
-        for child_id, child in enumerate(children):
-            expandable = getattr(child, attribute)
-            if expandable:
-                result.append(child_id)
+        for cell_id, cell in enumerate(self.cells):
+            if cell.isExpandable(length_name):
+                result.append(cell_id)
         return result
 
     def _inflate(self):
-        if not self.children:
+        if not self.cells:
             return
 
         allocated_size = self.allocated_size
-        children = self.children
+        cells = self.cells
         PRIMARY_LENGTH = self.PRIMARY_LENGTH
         SECONDARY_LENGTH = self.SECONDARY_LENGTH
 
-        #children_allo_size = map(size.SizeAllocation, children)
+        #children_allo_size = map(size.SizeAllocation, cells)
         children_allo_size = []
-        for child_id in range(len(children)):
-            children_allo_size.append(size.SizeAllocation(0, 0, 0, 0))
+        for child_id in range(len(cells)):
+            children_allo_size.append(size.SizeAllocation(size.Pos(0, 0),
+                                                          size.Size(0, 0)))
 
         # The secondary direction is easy, just apply it to every child.
         secondary_length = getattr(allocated_size, SECONDARY_LENGTH)
@@ -350,24 +342,24 @@ class Box(container.Container):
             msg = "No child can expand, the box cannot inflate."
             raise RuntimeError(msg)
 
-        # What is the space we can give to the expandable children ? It's the
+        # What is the space we can give to the expandable cells ? It's the
         # total allocated space, minus the spacing, minus the length of the
-        # non-expandable children.  Meanwhile, the non-expandable children just
+        # non-expandable cells.  Meanwhile, the non-expandable cells just
         # get what they ask for.        
         expandable_children_length = getattr(allocated_size, PRIMARY_LENGTH)
-        expandable_children_length -= self.spacing * (len(children) - 1)
-        for child_id, child in enumerate(children):
+        expandable_children_length -= self.spacing * (len(cells) - 1)
+        for child_id, child in enumerate(cells):
             if child_id not in expandable_ids:
                 child_length = getattr(child.requested_size, PRIMARY_LENGTH)
                 expandable_children_length -= child_length
                 setattr(children_allo_size[child_id], PRIMARY_LENGTH, child_length)
 
-        # Apply the homothecy on the expandable children.
+        # Apply the homothecy on the expandable cells.
         # The original lengths are the requested lengths.
         # The destination length is the length calculated above.
         ori_lengths = []
         for child_id in expandable_ids:
-            child_length = getattr(self.children[child_id].requested_size, PRIMARY_LENGTH)
+            child_length = getattr(self.cells[child_id].requested_size, PRIMARY_LENGTH)
             ori_lengths.append(child_length)
         dest_lengths = Homothecy(ori_lengths, expandable_children_length)
         for child_id, child_length in zip(expandable_ids, dest_lengths):
@@ -388,11 +380,40 @@ class Box(container.Container):
             allo_primary += spacing
 
         # Finally allocated all the calculated sizes.
-        for child, child_allo_size in zip(children, children_allo_size):
+        for child, child_allo_size in zip(cells, children_allo_size):
             child.allocateSize(child_allo_size)
 
+    
+    def _ideal(self):
+        if not self.cells:
+            return
+        # Secondary dimension is the same for everybody.
+        secondary_length = getattr(self.allocated_size, self.SECONDARY_LENGTH)
+        secondary_coord = getattr(self.allocated_size, self.SECONDARY_COORD)
+        
+        # Homogeneous box: every cell gets the max primary possible.
+        # Heterogeneous box: every cell gets the primary it asked for.
+        if self.homogeneous:
+            primary_length = 0
+            for cell in self.cells:
+                cell_prim = getattr(cell.requested_size, self.PRIMARY_LENGTH)
+                if cell_prim > primary_length:
+                    primary_length = cell_prim
+        heterogeneous = not self.homogeneous
+        primary_coord = getattr(self.allocated_size, self.PRIMARY_COORD)
+        for cell in self.cells:
+            if heterogeneous: 
+                primary_length = getattr(cell.requested_size, self.PRIMARY_LENGTH)
+            sa = size.SizeAllocation(size.Pos(0, 0), size.Size(0, 0))
+            setattr(sa, self.PRIMARY_LENGTH, primary_length)
+            setattr(sa, self.SECONDARY_LENGTH, secondary_length)
+            setattr(sa, self.PRIMARY_COORD, primary_coord)
+            setattr(sa, self.SECONDARY_COORD, secondary_coord)
+            cell.allocateSize(sa)
+            primary_coord += primary_length + self.spacing
 
-    def allocateSize(self, allocated_size):
+
+    def _allocateSize(self):
         """Allocate the size of the box.
         
         Child widgets inflate or shrink by a factor proportional to their
@@ -404,27 +425,25 @@ class Box(container.Container):
         The ideal case, where all widgets get what they want, is no different
         from shrinking or inflating by a factor 1.
 
-        Note first that if no child widget was added with expand=True, then
+        Note first that if no cell widget was added with expand=True, then
         trying to allocate more size than what the Box requests is forbidden.
         Doing so raises a size.SizeAllocationError.
         
         """
-        self.allocated_size = allocated_size
+        allocated_size = self.allocated_size
         requested_size = self.requested_size
-        allocated_long = getattr(allocated_size, self.PRIMARY_LENGTH)
-        allocated_short = getattr(allocated_size, self.SECONDARY_LENGTH)
-        requested_long = getattr(requested_size, self.PRIMARY_LENGTH)
-        requested_short = getattr(requested_size, self.SECONDARY_LENGTH)
+        allocated_primary = getattr(allocated_size, self.PRIMARY_LENGTH)
+        allocated_secondary = getattr(allocated_size, self.SECONDARY_LENGTH)
+        requested_primary = getattr(requested_size, self.PRIMARY_LENGTH)
+        requested_secondary = getattr(requested_size, self.SECONDARY_LENGTH)
         #
         # Not allowed to inflate if no widget can expand.
         #
-        expand_primary_name = 'expand_%s' % self.PRIMARY_LENGTH
-        expand_secondary_name = 'expand_%s' % self.SECONDARY_LENGTH
 
-        if allocated_long > requested_long:
+        if allocated_primary > requested_primary:
             can_expand_primary = False
-            for child in self.children:
-                if getattr(child, expand_primary_name):
+            for cell in self.cells:
+                if cell.isExpandable(self.PRIMARY_LENGTH):
                     can_expand_primary = True
                     break
             if not can_expand_primary:
@@ -432,10 +451,10 @@ class Box(container.Container):
                       "You can avoid that by preventing your Box to expand."
                 raise size.SizeAllocationError(msg)
 
-        if allocated_short > requested_short:
+        if allocated_secondary > requested_secondary:
             can_expand_secondary = False
-            for child in self.children:
-                if getattr(child, expand_secondary_name):
+            for cell in self.cells:
+                if cell.isExpandable(self.SECONDARY_LENGTH):
                     can_expand_secondary = True
                     break
             if not can_expand_secondary:
@@ -450,39 +469,50 @@ class Box(container.Container):
         # we have to inflate or shrink.  It's not the same because some widgets
         # are not allowed to inflate, but all widgets are allowed to shrink.
 
-        if allocated_long > requested_long:
+        if allocated_primary > requested_primary:
             self._inflate()
-        elif allocated_long < requested_long:
+        elif allocated_primary < requested_primary:
             self._shrink()
         else:
-            # Ideal.
-            pass
+            self._ideal()
 
 
 class HBox(Box):
     """HBox is the horizontal version of Box."""
     PRIMARY_LENGTH = 'width'
     SECONDARY_LENGTH = 'height'
-    def addChild(self, widget, expand, fill, *padding):
-        if self.homogeneous and not expand:
-            msg = "Homogeneous HBox objects do not accept widgets with " \
-                  "expand=False."
+    PRIMARY_COORD = 'left'
+    SECONDARY_COORD = 'top'
+
+    def addChild(self, child, expand_width, expand_height, *padding):
+        expandable_width = expand_width != Cell.EXPAND_NOT
+        expandable_height = expand_height != Cell.EXPAND_NOT 
+        if self.homogeneous and not expandable_width:
+            msg = "Homogeneous HBox objects do not accept children with " \
+                  "expand_width=Cell.EXPAND_NOT."
             raise container.ContainerError(msg)
-        expand_width = expand
-        expand_height = True
-        Box.addWidget(self, widget, expand_width, expand_height, fill, fill,
-                      *padding)
+        if not expandable_height:
+            msg = "HBox objects do not accept children with " \
+                  "expand_height=Cell.EXPAND_NOT."
+            raise container.ContainerError(msg)
+        Box.addChild(self, child, expand_width, expand_height, *padding)
+
 
 class VBox(Box):
-    """HBox is the vertical version of Box."""
+    """VBox is the vertical version of Box."""
     PRIMARY_LENGTH = 'height'
     SECONDARY_LENGTH = 'width'
-    def addChild(self, widget, expand, fill, *padding):
-        if self.homogeneous and not expand:
-            msg = "Homogeneous VBox objects do not accept widgets with " \
-                  "expand=False."
+    PRIMARY_COORD = 'top'
+    SECONDARY_COORD = 'left'
+    def addChild(self, child, expand_width, expand_height, *padding):
+        expandable_width = expand_width != Cell.EXPAND_NOT
+        expandable_height = expand_height != Cell.EXPAND_NOT 
+        if self.homogeneous and not expandable_height:
+            msg = "Homogeneous VBox objects do not accept children with " \
+                  "expand_height=Cell.EXPAND_NOT."
             raise container.ContainerError(msg)
-        expand_width = True
-        expand_height = expand
-        Box.addWidget(self, widget, expand_width, expand_height, fill, fill,
-                      *padding)
+        if not expandable_width:
+            msg = "VBox objects do not accept children with " \
+                  "expand_width=Cell.EXPAND_NOT."
+            raise container.ContainerError(msg)
+        Box.addChild(self, child, expand_width, expand_height, *padding)
