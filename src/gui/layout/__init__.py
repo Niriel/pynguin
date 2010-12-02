@@ -215,5 +215,8 @@ from cell import *
 from container import *
 from padding import *
 from parentable import *
+from scroll import *
 from size import *
 from sizeable import *
+from window import *
+

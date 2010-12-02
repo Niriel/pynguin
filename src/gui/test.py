@@ -6,7 +6,7 @@ Created on Nov 29, 2010
 
 import pygame
 from gui.layout import Cell
-from gui.widget import Screen, Window, Label, HBox, VBox
+from gui.widget import Screen, Window, Label, HBox, VBox, Scroll
 
 EVENT_QUIT = pygame.QUIT
 
@@ -20,7 +20,7 @@ font = pygame.font.Font(None, 30)
 font_big = pygame.font.Font(None, 50)
 
 screen = Screen()
-window = Window()
+window = Scroll()
 vbox = VBox(16, True)
 hbox = HBox(16, True)
 label0 = Label(font, "Hello")
@@ -34,6 +34,9 @@ hbox.addChild(label1, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
 hbox.addChild(label2, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
 
 screen.negotiateSize()
+window.moveTo(100, 9)
+#window.resize(250, 150)
+window.tryScrollTo(300, 10)
 screen.update()
 
 print hbox.cells[1].requested_size

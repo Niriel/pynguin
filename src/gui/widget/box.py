@@ -22,6 +22,9 @@ class HBox(Widget, HBoxLayout):
     def addChild(self, child, expand_width, expand_height, *padding):
         self.addSprite(child)
         HBoxLayout.addChild(self, child, expand_width, expand_height, *padding)
+    
+    def adjustRect(self):
+        pass
 
 
 class VBox(Widget, VBoxLayout):
@@ -36,3 +39,6 @@ class VBox(Widget, VBoxLayout):
     def addChild(self, child, expand_width, expand_height, *padding):
         self.addSprite(child)
         VBoxLayout.addChild(self, child, expand_width, expand_height, *padding)
+
+    def adjustRect(self):
+        pass

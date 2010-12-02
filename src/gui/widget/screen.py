@@ -25,5 +25,5 @@ class Screen(Widget, BoardLayout, ScreenSprite):
         BoardLayout.addChild(self, child)
 
     def _allocateSize(self):
-        Widget._allocateSize(self)
         BoardLayout._allocateSize(self)
+        Widget._allocateSize(self)

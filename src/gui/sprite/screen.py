@@ -18,5 +18,6 @@ class Screen(Window):
     def update(self):
         self.image = pygame.display.get_surface()
         self.rect = self.image.get_rect()
+        self.drawable_image = self.image
         Window.update(self)
 

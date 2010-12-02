@@ -30,13 +30,11 @@ class Window(GuiSprite):
     """
 
     BG_COLOR = (255, 255, 255)
+    SPRITE_GROUP_CLS = pygame.sprite.LayeredUpdates
 
     def __init__(self):
         GuiSprite.__init__(self)
-        self._group = pygame.sprite.LayeredUpdates()
-
-    def drawSprites(self):
-        self._group.draw(self.image)
+        self._group = self.SPRITE_GROUP_CLS()
 
     def update(self):
         """Refreshes the image of the window by redrawing all the sprites.
@@ -47,6 +45,9 @@ class Window(GuiSprite):
         GuiSprite.update(self)
         self._group.update()
         self.drawSprites()
+
+    def drawSprites(self):
+        self._group.draw(self.drawable_image)
 
     def getSpritesAt(self, pos):
         if not self.rect.collidepoint(pos):

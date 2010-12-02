@@ -12,10 +12,11 @@ class GuiSprite(pygame.sprite.Sprite):
     SURFACE_FLAGS = 0
     BG_COLOR = (32, 32, 32, 255)
 
-    def __init__(self, *groups):
-        pygame.sprite.Sprite.__init__(self, *groups)
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
         self.image = None
         self.rect = pygame.Rect(0, 0, 0, 0)
+        self.drawable_image = self.image
 
     def update(self):
         """Redraw the sprite.
@@ -45,10 +46,11 @@ class GuiSprite(pygame.sprite.Sprite):
         """
 
         self.image = pygame.Surface(self.rect.size, flags=self.SURFACE_FLAGS)
+        self.drawable_image = self.image
 
     def drawBackground(self):
         """Fill the image property with the solid color BG_COLOR."""
-        self.image.fill(self.BG_COLOR)
+        self.drawable_image.fill(self.BG_COLOR)
 
     def getSpritesAt(self, pos):
         return [self] if self.rect.collidepoint(pos) else []

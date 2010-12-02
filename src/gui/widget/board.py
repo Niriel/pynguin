@@ -4,8 +4,8 @@ Created on Nov 29, 2010
 @author: Niriel
 '''
 
-from gui.sprite.boardsprite import BoardSprite
-import gui.layout.board
+from gui.sprite.board import Board as BoardSprite
+from gui.layout.board import Board as BoardLayout
 
-class Board(gui.layout.board.Board, BoardSprite):
+class Board(BoardLayout, BoardSprite):
     pass

@@ -41,8 +41,7 @@ class Label(GuiSprite):
             dest_rect.left = 0
         if dest_rect.top < 0:
             dest_rect.top = 0
-        self.image.fill(self.BG_COLOR)
-        self.image.blit(text_image, dest_rect)
+        self.drawable_image.blit(text_image, dest_rect)
 
     def setText(self, text):
         if text == self._text:

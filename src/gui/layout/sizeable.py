@@ -68,3 +68,13 @@ class Sizeable(object):
             pos = Pos(0, 0)
         new_allo_size = SizeAllocation(pos, self.requested_size)
         self.allocateSize(new_allo_size)
+
+    def moveTo(self, x, y):
+        self.allocated_size.pos.x = x
+        self.allocated_size.pos.y = y
+        self.allocateSize(self.allocated_size)
+
+    def resize(self, width, height):
+        self.allocated_size.width = width
+        self.allocated_size.height = height
+        self.allocateSize(self.allocated_size)

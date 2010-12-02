@@ -29,7 +29,6 @@ class Widget(object):
         object.
         
         """
-        if hasattr(self, 'rect'):
-            size = self.allocated_size
-            self.rect.topleft = (size.left, size.top)
-            self.rect.size = (size.width, size.height)
+        size = self.allocated_size
+        self.rect.topleft = (size.left, size.top)
+        self.rect.size = (size.width, size.height)

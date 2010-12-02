@@ -5,7 +5,7 @@ Created on Nov 29, 2010
 '''
 
 from cell import Cell
-from size import SizeRequisition, SizeAllocation, Pos
+from size import Size, SizeRequisition, SizeAllocation, Pos
 from container import Container
 
 __all__ = ['Board']
@@ -32,8 +32,12 @@ class Board(Container):
 
     def negotiateSize(self):
         self.requestSize()
-        sa = SizeAllocation(Pos(0, 0), self.requested_size)
-        self.allocateSize(sa)
+        allocated_size = self.allocated_size
+        if allocated_size:
+            allocated_size.size = Size(self.requested_size)
+        else:
+            allocated_size = SizeAllocation(Pos(0, 0), self.requested_size)
+        self.allocateSize(allocated_size)
 
     def addChild(self, child):
         Container.addChild(self, child, Cell.EXPAND_NOT, Cell.EXPAND_NOT)

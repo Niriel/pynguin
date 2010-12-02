@@ -36,9 +36,8 @@ class Bin(Container):
         return cell.requested_size
 
     def _allocateSize(self):
-        allocated_size = self.allocated_size
         if self.cells:
-            self.cells[0].allocateSize(allocated_size)
+            self.cells[0].allocateSize(self.allocated_size)
 
     def addChild(self, child, *args):
         """Add a child to the Bin.
@@ -50,5 +49,4 @@ class Bin(Container):
         if self.cells:
             msg = "Cannot add a second child to a Bin."
             raise BinHasAlreadyOneChildError(msg)
-        else:
-            Container.addChild(self, child, *args)
+        Container.addChild(self, child, *args)
