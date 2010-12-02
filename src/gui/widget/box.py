@@ -6,38 +6,38 @@ Created on Nov 30, 2010
 
 from gui.layout import HBox as HBoxLayout
 from gui.layout import VBox as VBoxLayout
-from widget import Widget
+from container import Container
 
 __all__ = ['HBox', 'VBox']
 
-class HBox(Widget, HBoxLayout):
+class HBox(Container, HBoxLayout):
     def __init__(self, homogeneous, spacing):
-        Widget.__init__(self)
+        Container.__init__(self)
         HBoxLayout.__init__(self, homogeneous, spacing)
     
     def _allocateSize(self):
-        Widget._allocateSize(self)
+        Container._allocateSize(self)
         HBoxLayout._allocateSize(self)
     
     def addChild(self, child, expand_width, expand_height, *padding):
-        self.addSprite(child)
+        Container.addChild(self, child)
         HBoxLayout.addChild(self, child, expand_width, expand_height, *padding)
     
     def adjustRect(self):
         pass
 
 
-class VBox(Widget, VBoxLayout):
+class VBox(Container, VBoxLayout):
     def __init__(self, homogeneous, spacing):
-        Widget.__init__(self)
+        Container.__init__(self)
         VBoxLayout.__init__(self, homogeneous, spacing)
     
     def _allocateSize(self):
-        Widget._allocateSize(self)
+        Container._allocateSize(self)
         VBoxLayout._allocateSize(self)
     
     def addChild(self, child, expand_width, expand_height, *padding):
-        self.addSprite(child)
+        Container.addChild(self, child)
         VBoxLayout.addChild(self, child, expand_width, expand_height, *padding)
 
     def adjustRect(self):

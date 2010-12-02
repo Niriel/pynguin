@@ -10,7 +10,7 @@ from window import Window
 __all__ = ['Screen']
 
 class Screen(Window):
-    BG_COLOR = (237, 236, 235)
+    BG_COLOR = (255, 255, 255)
     def __init__(self):
         Window.__init__(self)
         self.update()

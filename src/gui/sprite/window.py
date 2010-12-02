@@ -29,7 +29,7 @@ class Window(GuiSprite):
 
     """
 
-    BG_COLOR = (255, 255, 255)
+    BG_COLOR = (235, 235, 235)
     SPRITE_GROUP_CLS = pygame.sprite.LayeredUpdates
 
     def __init__(self):

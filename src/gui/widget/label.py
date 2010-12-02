@@ -8,6 +8,8 @@ from widget import Widget
 from gui.layout import SizeRequisition, Sizeable, Parentable
 from gui.sprite import Label as LabelSprite
 
+__all__ = ['Label']
+
 class Label(Widget, Sizeable, Parentable, LabelSprite):
     def __init__(self, font, text):
         Widget.__init__(self)
