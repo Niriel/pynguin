@@ -32,16 +32,20 @@ class Screen(Container, BoardLayout, ScreenSprite):
         BoardLayout._allocateSize(self)
         Container._allocateSize(self)
 
+    def batchUpdate(self, value):
+        self._batch_update = value
+        if not value and self._updates_nb:
+            self.update()
+
     def callForUpdate(self):
         if self._batch_update:
             self._updates_nb += 1
         else:
             self.update()
-
-    def batchUpdate(self, value):
-        self._batch_update = value
-        if not value and self._updates_nb:
-            self.update()
+    
+    def _findSizeNegotiator(self, caller):
+        # Equivalent of "caller if caller else self"
+        return caller if caller else self
 
     def callForRedraw(self):
         self._draw()

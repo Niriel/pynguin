@@ -4,9 +4,15 @@ Created on Nov 30, 2010
 @author: Niriel
 '''
 
+from common.weakrefplus import WeakRef
+
 __all__ = ['Widget']
 
 class Widget(object):
+    def __init__(self):
+        object.__init__(self)
+        self._size_negotiator = WeakRef(None)
+
     def _allocateSize(self):
         self.adjustRect()
 
@@ -37,3 +43,17 @@ class Widget(object):
         drawer = self._findDrawer()
         if drawer:
             drawer.callForRedraw()
+
+    def _findSizeNegotiator(self, caller):
+        negotiator = self._size_negotiator()
+        if negotiator:
+            return negotiator
+        parent = self.parent
+        if parent:
+            negotiator = parent._findSizeNegotiator(self)
+        self._size_negotiator.set(negotiator)
+        return negotiator
+
+    def callForSizeNegotiation(self, caller):
+        negotiator = self._findSizeNegotiator(self)
+        negotiator.negotiateSize()

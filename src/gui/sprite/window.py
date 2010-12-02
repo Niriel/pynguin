@@ -61,3 +61,6 @@ class Window(GuiSprite):
         for sprite in sprites:
             result += sprite.getSpritesAt(rel_pos)
         return result
+
+    def _findDrawer(self):
+        return self

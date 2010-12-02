@@ -15,7 +15,21 @@ class Label(Widget, Sizeable, Parentable, LabelSprite):
         Widget.__init__(self)
         Sizeable.__init__(self)
         Parentable.__init__(self)
-        LabelSprite.__init__(self, font, text)
+        LabelSprite.__init__(self, font)
+        self._text = text
 
     def _requestSize(self):
         return SizeRequisition(*self.getTextSize())
+
+    def setText(self, text):
+        if text == self._text:
+            return
+        self._text = text
+        self._refreshGui()
+
+    def _refreshGui(self):
+        if self._requestSize() != self.requested_size:
+            self.callForSizeNegotiation([])
+            self.callForUpdate()
+        else:
+            self.callForRedraw()

@@ -29,17 +29,6 @@ class Sizeable(object):
         self.allocated_size = SizeAllocation(size.pos, size.size)
         self._allocateSize()
 
-    def callForSizeNegociation(self, caller):
-        current_size = self.requested_size
-        new_size = self._requestSize()
-        if current_size == new_size:
-            if caller:
-                caller.negotiateSize()
-        elif self.parent:
-            self.parent.callForSizeNegotiation(self)
-        else:
-            self.negotiateSize()
-
     def negotiateSize(self):
         """Run the full cycle of size negotiation: request and allocation.
 
@@ -78,3 +67,4 @@ class Sizeable(object):
         self.allocated_size.width = width
         self.allocated_size.height = height
         self.allocateSize(self.allocated_size)
+

@@ -42,7 +42,7 @@ def main():
     window.moveTo(100, 9)
     window.resize(250, 150)
     button.setMode(Button.MODE_INACTIVE)
-    textbox._text = "sadjlpfADF" * 15
+    textbox._text = "sadjlpfADF"
     textbox._drawText = textbox._drawTextEdit
     screen.update()
 
@@ -55,9 +55,10 @@ def main():
         screen.batchUpdate(False)
         pygame.display.flip()
         screen.batchUpdate(True)
-        clock.tick(30)
+        clock.tick()
         button.setMode(random.randrange(4))
-        window.tryScrollTo(x, 10)
+        label1.setText("%i FPS" % int(round(clock.get_fps())))
+        window.tryScrollTo(x, 0)
         x += dx
         if x >= 300 or x <= 0:
             dx = -dx

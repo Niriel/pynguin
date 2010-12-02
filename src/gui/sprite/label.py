@@ -12,10 +12,9 @@ class Label(GuiSprite):
     BG_COLOR = (0, 0, 0, 0) # Fully transparent.
     TX_COLOR = (0, 0, 0, 255) # Pure black.
 
-    def __init__(self, font, text):
+    def __init__(self, font):
         GuiSprite.__init__(self)
         self._font = font
-        self._text = text
     
     def getTextSize(self):
         return self._font.size(self._text)
@@ -42,9 +41,3 @@ class Label(GuiSprite):
     def _draw(self):
         self._drawBackground()
         self._drawText()
-
-    def setText(self, text):
-        if text == self._text:
-            return
-        self.text = text
-        self.callForSizeNegotiation()

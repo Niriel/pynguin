@@ -26,9 +26,12 @@ class Board(Container):
     def _allocateSize(self):
         # Just give all the children what they want.
         for cell in self.cells:
-            if not cell.allocated_size:
+            if cell.allocated_size:
+                sa = cell.allocated_size
+                sa.size = Size(cell.requested_size)
+            else:
                 sa = SizeAllocation(Pos(0, 0), cell.requested_size)
-                cell.allocateSize(sa)
+            cell.allocateSize(sa)
 
     def negotiateSize(self):
         self.requestSize()
