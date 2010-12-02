@@ -16,10 +16,10 @@ class TestGuiSprite(unittest.TestCase):
         self.assertEquals(s.image, None)
 
     def testCreateImage(self):
-        """GuiSprite.createImage allocates a Surface with the right size."""
+        """GuiSprite._createImage allocates a Surface with the right size."""
         sp = guisprite.GuiSprite()
         sp.rect.size = (8, 16)
-        sp.createImage()
+        sp._createImage()
         image = sp.image
         self.assertEquals(image.get_size(), (8, 16))
 

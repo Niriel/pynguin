@@ -19,12 +19,11 @@ class Button(GuiSprite):
     BD_COLOR = (100, 100, 100)
     def __init__(self):
         GuiSprite.__init__(self)
-        self._draw = self._drawNormal
+        self._drawBackground = self._drawNormal
 
-    def update(self):
-        GuiSprite.update(self)
-        self._draw()
-        rectangle.Border(self.drawable_image, self.BD_COLOR, 1)
+    def _draw(self):
+        self._drawBackground()
+        rectangle.Border(self.drawable_image, self.BD_COLOR, 2)
 
     def _drawNormal(self):
         rectangle.RectangleVGrad(self.drawable_image,

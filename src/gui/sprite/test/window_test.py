@@ -12,7 +12,7 @@ class windowTest(unittest.TestCase):
     def testInit(self):
         """window.__init__ does its job."""
         w = window.Window()
-        self.assertEquals(w._group.__class__.__name__, 'LayeredUpdates')
+        self.assertEquals(w.sprites_group.__class__.__name__, 'LayeredUpdates')
     
     def testGetSpritesAt(self):
         """window.getSpritesAt return clicked children and itself."""
@@ -28,8 +28,8 @@ class windowTest(unittest.TestCase):
         w2.rect = pygame.Rect((240, 90), (50, 50))
         c3.rect = pygame.Rect((10, 10), (10, 10))
         # Notice that c1 and c2 overlap.
-        w1._group.add([c1, c2, w2])
-        w2._group.add(c3)
+        w1.sprites_group.add([c1, c2, w2])
+        w2.sprites_group.add(c3)
         #
         self.assertEquals(w1.getSpritesAt((0, 0)), [])
         self.assertEquals(w1.getSpritesAt((200, 100)), [w1])

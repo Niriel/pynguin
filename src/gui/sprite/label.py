@@ -16,15 +16,11 @@ class Label(GuiSprite):
         GuiSprite.__init__(self)
         self._font = font
         self._text = text
-
-    def update(self):
-        GuiSprite.update(self)
-        self.drawText()
     
     def getTextSize(self):
         return self._font.size(self._text)
     
-    def drawText(self):
+    def _drawText(self):
         """Centers the text on the sprite image.
 
         If the text is too big to be centered, then you will only see the top-
@@ -36,12 +32,16 @@ class Label(GuiSprite):
 
         """
         text_image = self._font.render(self._text, True, self.TX_COLOR)
-        dest_rect = text_image.get_rect(center = self.image.get_rect().center)
+        dest_rect = text_image.get_rect(center = self.drawable_image.get_rect().center)
         if dest_rect.left < 0:
             dest_rect.left = 0
         if dest_rect.top < 0:
             dest_rect.top = 0
         self.drawable_image.blit(text_image, dest_rect)
+
+    def _draw(self):
+        self._drawBackground()
+        self._drawText()
 
     def setText(self, text):
         if text == self._text:

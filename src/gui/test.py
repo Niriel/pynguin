@@ -6,7 +6,7 @@ Created on Nov 29, 2010
 
 import pygame
 from gui.layout import Cell
-from gui.widget import Screen, Label, HBox, VBox, Scroll, Button
+from gui.widget import Screen, Label, HBox, VBox, Scroll, Button, TextBox
 
 EVENT_QUIT = pygame.QUIT
 
@@ -28,6 +28,7 @@ def main():
     label1 = Label(font_big, "super happy")
     button = Button()
     label2 = Label(font, "world!")
+    textbox = TextBox(font)
     screen.addChild(window)
     window.addChild(vbox, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING, 8)
     vbox.addChild(label0, Cell.EXPAND_PADDING, Cell.EXPAND_PADDED)
@@ -35,17 +36,15 @@ def main():
     hbox.addChild(label1, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
     hbox.addChild(button, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING)
     button.addChild(label2, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING, 8)
+    vbox.addChild(textbox, Cell.EXPAND_PADDED, Cell.EXPAND_PADDING, 8)
 
     screen.negotiateSize()
     window.moveTo(100, 9)
     window.resize(250, 150)
     button.setMode(Button.MODE_INACTIVE)
+    textbox._text = "sadjlpfADF" * 15
+    textbox._drawText = textbox._drawTextEdit
     screen.update()
-
-    print hbox.cells[1].requested_size
-    print hbox.cells[1].allocated_size
-    print label2.requested_size
-    print label2.allocated_size
 
     import random
 
@@ -70,7 +69,7 @@ def main():
 
 if __name__ == '__main__':
     import cProfile as profile
-    if True:
+    if False:
         profile.run('main()')
     else:
         main()

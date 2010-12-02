@@ -48,14 +48,15 @@ class Scroll(Window):
         self.big_rect = pygame.Rect(0, 0, 0, 0)
         self.visible_rect = pygame.Rect(0, 0, 0, 0)
 
-    def createImage(self):
+    def _createImage(self):
         self.image = pygame.Surface(self.rect.size, flags=self.SURFACE_FLAGS)
         self.big_image = pygame.Surface(self.big_rect.size, flags=self.SURFACE_FLAGS)
         self.drawable_image = self.big_image
 
-    def update(self):
-        Window.update(self)
-        self.drawVisiblePart()
+    def _draw(self):
+        self._drawBackground()
+        self._drawSprites()
+        self._drawVisiblePart()
 
-    def drawVisiblePart(self):
+    def _drawVisiblePart(self):
         self.image.blit(self.big_image, (0, 0), self.visible_rect)

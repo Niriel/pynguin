@@ -52,8 +52,8 @@ class Scroll(Container, ScrollLayout, ScrollSprite):
             self.visible_pos.y = top
             self.adjustVisibleRect()
             if self.image:
-                self.drawVisiblePart()
-                self.callForUpdate()
+                self._drawVisiblePart()
+                self.callForRedraw()
 
     def tryScrollTo(self, left, top):
         if left < 0:
@@ -67,3 +67,9 @@ class Scroll(Container, ScrollLayout, ScrollSprite):
         if top > max_y:
             top = max_y
         self.scrollTo(left, top)
+
+    def callForRedraw(self):
+        self._draw()
+        parent = self.parent
+        if parent:
+            parent.callForRedraw()

@@ -42,3 +42,6 @@ class Screen(Container, BoardLayout, ScreenSprite):
         self._batch_update = value
         if not value and self._updates_nb:
             self.update()
+
+    def callForRedraw(self):
+        self._draw()

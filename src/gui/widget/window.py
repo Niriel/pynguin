@@ -23,3 +23,9 @@ class Window(Container, WindowLayout, WindowSprite):
     def addChild(self, child, *args):
         Container.addChild(self, child)
         WindowLayout.addChild(self, child, *args)
+
+    def callForRedraw(self):
+        self._draw()
+        parent = self.parent
+        if parent:
+            parent.callForRedraw()

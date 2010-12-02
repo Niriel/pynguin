@@ -40,10 +40,10 @@ class Button(Container, BinLayout, ButtonSprite):
                   "Button.MODE_INACTIVE."
             raise ValueError(msg)
         self.mode = mode
-        self._draw = (self._drawNormal,
-                     self._drawPressed,
-                     self._drawHighlight,
-                     self._drawInactive)[mode]
+        self._drawBackground = (self._drawNormal,
+                                self._drawPressed,
+                                self._drawHighlight,
+                                self._drawInactive)[mode]
         if self.drawable_image:
             self._draw()
-            self.callForUpdate()
+            self.callForRedraw()
