@@ -1,7 +1,7 @@
 '''
 Created on Nov 9, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 
@@ -160,7 +160,7 @@ class Box(container.Container):
         """
         PRIMARY_LENGTH = self.PRIMARY_LENGTH
         SECONDARY_LENGTH = self.SECONDARY_LENGTH
-        max_size = size.SizeRequisition(0, 0)
+        max_size = size.Size(0, 0)
         for child in self.cells:
             child.requestSize()
             max_size |= child.requested_size
@@ -169,7 +169,7 @@ class Box(container.Container):
         thickness = getattr(max_size, SECONDARY_LENGTH)
         if children_nb >= 2:
             length += (children_nb - 1) * self.spacing
-        result = size.SizeRequisition(0, 0)
+        result = size.Size(0, 0)
         setattr(result, PRIMARY_LENGTH, length)
         setattr(result, SECONDARY_LENGTH, thickness)
         return result
@@ -216,7 +216,7 @@ class Box(container.Container):
         # Add the spacing between the widgets.
         if children_nb >= 2:
             box_long += (children_nb - 1) * self.spacing
-        result = size.SizeRequisition(0, 0)
+        result = size.Size(0, 0)
         setattr(result, long_name, box_long)
         setattr(result, short_name, box_short)
         return result

@@ -9,17 +9,8 @@ import parentable
 from cell import Cell
 
 
-__all__ = ['ContainerError', 'Container']
+__all__ = ['Container']
 
-
-class ContainerError(RuntimeError):
-    pass
-
-class NoParentError(ContainerError):
-    pass
-
-class AlreadyParentError(ContainerError):
-    pass
 
 class Container(sizeable.Sizeable, parentable.Parentable):
     def __init__(self):
@@ -31,11 +22,11 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         if not hasattr(child, 'parent'):
             msg = "%r has no 'parent' attribute.  " \
                   "Make sure it implements Parentable." % child
-            raise NoParentError(msg)
+            raise parentable.NoParentError(msg)
         if child.parent is not None:
             msg = "%r already has a parent (%r), it cannot be added to %r." % \
                   (child, child.parent, self)
-            raise AlreadyParentError(msg)
+            raise parentable.AlreadyParentError(msg)
         child.parent = self
         cell = Cell(child, expand_width, expand_height, *padding)
         self.cells.append(cell)

@@ -6,7 +6,7 @@ Created on Nov 29, 2010
 
 from gui.widget import Container
 from gui.layout import Board as BoardLayout
-from gui.layout import SizeRequisition
+from gui.layout import Size
 from gui.sprite import Screen as ScreenSprite
 
 __all__ = ['Screen']
@@ -18,11 +18,13 @@ class Screen(Container, BoardLayout, ScreenSprite):
         ScreenSprite.__init__(self)
         self._batch_update = False
         self._updates_nb = 0
+        self._createImage()
+        self.preferred_size = Size(*self.rect.size)
 
     def update(self):
         self._updates_nb = 0
         ScreenSprite.update(self)
-        ScreenSprite.PREFERRED_SIZE = SizeRequisition(*self.rect.size)
+        self.preferred_size = Size(*self.rect.size)
 
     def addChild(self, child):
         Container.addChild(self, child)
@@ -42,10 +44,6 @@ class Screen(Container, BoardLayout, ScreenSprite):
             self._updates_nb += 1
         else:
             self.update()
-    
-    def _findSizeNegotiator(self, caller):
-        # Equivalent of "caller if caller else self"
-        return caller if caller else self
 
-    def callForRedraw(self):
-        self._draw()
+    def _findSizeNegotiator(self, caller):
+        return caller if caller else self

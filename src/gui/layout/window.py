@@ -16,7 +16,8 @@ class Window(Bin):
         As a result, the position of the child is always (0, 0).
 
         """
-        if self.cells:
+        cell = self.cell
+        if cell:
             allocated_size = self.allocated_size
             sa = SizeAllocation(Pos(0, 0), allocated_size.size)
-            self.cells[0].allocateSize(sa)
+            cell.allocateSize(sa)

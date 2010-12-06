@@ -1,7 +1,7 @@
 '''
 Created on Nov 17, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 import unittest

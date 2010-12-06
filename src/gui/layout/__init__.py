@@ -19,9 +19,10 @@ Sizeable does not need to be the only ancestor.  To put a button in a window,
 you will want to create a Button and a Window class, both inheriting from
 Sizeable.
 
-A Sizeable object has two sizes:
+A Sizeable object has three sizes:
 - a requested size ;
-- an allocated size.
+- an allocated size ;
+- a forced requested size.
 
 1) The requested size.
 
@@ -31,25 +32,24 @@ margin around.  The window requests the size needed to display all its content.
 
 The requested size is calculated in the method _requestSize.  Its
 default behavior is to raise a NotImplementedError, since Sizeable is not
-supposed to be used as is. Each class implementing Sizeable should have its own
+supposed to be used as is. Each class subclassing Sizeable should have its own
 _requestSize.
 
-The method _requestSize returns a size.SizeRequisition object.  This
+The method _requestSize returns a size.Size object.  This
 object has two properties: width and height.
 
-The user should never call _requestSize but should call
-requestSize instead.  requestSize does not return anything.
-It calls _requestSize and stores the result in the requested_size
-attribute of the Sizeable object.
+The user should never call _requestSize but should call requestSize instead.
+requestSize does not return anything. It calls _requestSize and stores the
+result in the attribute requested_size of the Sizeable object.
 
 2) The allocated size.
 
 In an ideal case, each element of your GUI would receive the size it asks for.
-But the screen is not infinitely big, and the user may want to change the size
-of his windows.  The allocated size is the size that you force onto your
-element.  Any Sizeable object should be designed and implemented in order to
-accept any possible size.  It does not need to be pretty, it needs to not
-crash.  If the user reduces his window to a few pixels, or even 0, the code
+But the screen is not infinitely big or the user may want to change the size of
+the windows.  The allocated size is the size that you force onto your element.
+Any Sizeable object should be designed and implemented in order to accept any
+possible size.  It does not need to be pretty or to make sense, but it needs to
+not crash.  If the user reduces the window to a few pixels, or even 0, the code
 should still work and do its best.
 
 The user allocates the size of the Sizeable object by calling its allocateSize
@@ -65,7 +65,26 @@ IMPORTANT: always remember to call requestSize before calling
 allocateSize, even if you do not allocate the requested size.  This is because
 requestSize will give allocateSize a first guess to start with.
 
-3) Size negotiation.
+3) The forced requested size.
+
+Sizeable objects have a forced_requested_size attribute.  Its value is None by
+default and often remains None.
+
+The method requestSize calls _requestSize.  Then, if forced_requested_size is
+not None, then requested_size takes the value of forced_requested_size.  It is
+important to call _requestSize even though we do not use requested_size
+because _requestSize often calls requestSize of children (see the part on
+Container objects).
+
+This is useful in some situations.  For example, the user has placed a window
+somewhere on the screen, with a specific size and position.  This window
+contains a large widget for entering some text (think of a notepad
+application).  A lot of text is inserted.  The window would like to grow bigger
+and bigger with each letter inserted in order to display it all, to the point
+of growing bigger than the screen.  Such a behavior would be strange and
+annoying.  It can be overridden by setting a forced requested size.
+
+4) Size negotiation.
 
 The size negotiation takes two steps:
 - size requisition;
@@ -73,7 +92,9 @@ The size negotiation takes two steps:
 
 Sizeable objects are provided with a method called negotiateSize.  The default
 behavior is to call requestSize, and then call allocatedSize with the obtained
-requested size.  That gives the Sizeable object the size it wants.
+requested size.  That gives the Sizeable object the size it wants.  If you do
+not wish to let the objects get the size they want, then you may want to call
+requestSize and allocateSize yourself instead of calling negotiateSize.
 
 You will need to override this behavior sometimes.  For example, you can see
 the entire screen of your application as a Container.  Therefore it is also a

@@ -10,7 +10,7 @@ height and size ; returning left+right, top+bottom and Size(width, height).
 
 Created on Nov 27, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 import size

@@ -1,17 +1,18 @@
 '''
 Created on Nov 29, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 import pygame
 from gui.layout import Cell
 from gui.widget import Screen, Label, HBox, VBox, Scroll, Button, TextBox
+from gui.widget import windowmanager
 
 EVENT_QUIT = pygame.QUIT
 
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 200
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 
 def main():
     pygame.init()
@@ -38,14 +39,15 @@ def main():
     button.addChild(label2, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING, 8)
     vbox.addChild(textbox, Cell.EXPAND_PADDED, Cell.EXPAND_PADDING, 8)
 
-    screen.negotiateSize()
-    window.moveTo(100, 9)
-    window.resize(250, 150)
-    button.setMode(Button.MODE_INACTIVE)
     textbox._text = "sadjlpfADF"
     textbox._drawText = textbox._drawTextEdit
-    screen.update()
 
+    screen.negotiateSize()
+    print window.allocated_size
+    windowmanager.ResizeToFitInto(window, screen)
+
+    button.setMode(Button.MODE_INACTIVE)
+    screen.update()
     import random
 
     running = True

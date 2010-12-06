@@ -1,7 +1,7 @@
 '''
 Created on Nov 9, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 import unittest
@@ -64,7 +64,7 @@ class TestBox(unittest.TestCase):
             self.width = width
             self.height = height
         def requestSize(self):
-            self.requested_size = size.SizeRequisition(self.width, self.height)
+            self.requested_size = size.Size(self.width, self.height)
         def allocateSize(self, allocated_size):
             self.allocated_size = allocated_size
 

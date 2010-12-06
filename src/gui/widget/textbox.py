@@ -4,9 +4,10 @@ Created on Dec 2, 2010
 @author: Niriel
 '''
 
+import math
 import string
 from widget import Widget
-from gui.layout import Sizeable, Parentable, SizeRequisition
+from gui.layout import Sizeable, Parentable, Size
 from gui.sprite import TextBox as TextBoxSprite
 
 __all__ = ['TextBox']
@@ -24,4 +25,8 @@ class TextBox(Widget, Sizeable, Parentable, TextBoxSprite):
         self._text = ""
     
     def _requestSize(self):
-        return SizeRequisition(*self.getTextSize())
+        width, height = self.getTextSize()
+        zoom = self.ZOOM
+        width = int(math.ceil(float(width) / zoom))
+        height = int(math.ceil(float(height) / zoom))
+        return Size(width, height)

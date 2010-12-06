@@ -1,7 +1,7 @@
 '''
 Created on Dec 2, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 from guisprite import GuiSprite

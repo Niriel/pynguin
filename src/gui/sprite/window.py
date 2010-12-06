@@ -1,7 +1,7 @@
 '''
 Created on Nov 26, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 import pygame
@@ -62,5 +62,5 @@ class Window(GuiSprite):
             result += sprite.getSpritesAt(rel_pos)
         return result
 
-    def _findDrawer(self):
+    def _findDrawerOld(self):
         return self

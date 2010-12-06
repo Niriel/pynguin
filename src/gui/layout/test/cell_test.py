@@ -1,24 +1,32 @@
 '''
 Created on Nov 25, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 import unittest
 from gui.layout import size
-from gui.layout.cell import Cell
+from gui.layout.cell import Cell, CellError
+from gui.layout import cell as cell_module
 from gui.layout.padding import Padding
 
+class TestDocTest(unittest.TestCase):
+    def testDocTest(self):
+        """module size passes its doctests."""
+        import doctest
+        failures, tests = doctest.testmod(m=cell_module)
+        del tests # Just to remove the eclipse warning on the unused variable.
+        self.assertEquals(failures, 0)
 
 class TestCell(unittest.TestCase):
     class Mockpadded(object):
         """A pseudo padded implementing only what I need for this test."""
         def requestSize(self):
-            self.requested_size = size.SizeRequisition(10, 20)
+            self.requested_size = size.Size(10, 20)
         def allocateSize(self, allocated_size):
             self.allocated_size = allocated_size
 
-    def testInitpadded(self):
+    def testInitPadded(self):
         """Cell.__init__ properly assigns the padded."""
         padded = TestCell.Mockpadded()
         p = Cell(padded, Cell.EXPAND_NOT, Cell.EXPAND_NOT)
@@ -46,13 +54,13 @@ class TestCell(unittest.TestCase):
         self.assertTrue(p.padding is padding)
 
     def testRequestSize(self):
-        """Cell.requestSize adds padding size to padded size.""" 
+        """Cell.requestSize adds padding size to padded size."""
         padded = TestCell.Mockpadded()
         cell = Cell(padded, Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 4, 8)
         cell.requestSize()
         rs = cell.requested_size
         self.assertEquals(rs, size.Size(13, 32))
-        self.assertTrue(isinstance(rs, size.SizeRequisition))
+        self.assertTrue(isinstance(rs, size.Size))
 
     def testAllocateSizeEqual(self):
         """Cell.allocateSize gives the padded what it wants when ideal.
@@ -65,8 +73,8 @@ class TestCell(unittest.TestCase):
         padded = TestCell.Mockpadded()
         cell = Cell(padded, Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 4, 8)
         cell.requestSize()
-        requested_size = cell.requested_size        
-        allocated_size = size.SizeAllocation(size.Pos(100, 200), requested_size)
+        requested_size = cell.requested_size
+        allocated_size = size.SizeAllocation((100, 200), requested_size)
         cell.allocateSize(allocated_size)
         padded_size = padded.allocated_size
         self.assertEquals(padded_size.width, 10)
@@ -80,7 +88,7 @@ class TestCell(unittest.TestCase):
         cell = Cell(padded, Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 4, 8)
         cell.requestSize()
         requested_size = cell.requested_size
-        allocated_size = size.SizeAllocation(size.Pos(100, 200), requested_size)
+        allocated_size = size.SizeAllocation((100, 200), requested_size)
         allocated_size.height -= 15 # padded height is 20, remove 15 leaves 5.
         cell.allocateSize(allocated_size)
         padded_size = padded.allocated_size
@@ -110,7 +118,7 @@ class TestCell(unittest.TestCase):
         cell = Cell(padded, Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 4, 8)
         cell.requestSize()
         requested_size = cell.requested_size
-        allocated_size = size.SizeAllocation(size.Pos(100, 200), requested_size)
+        allocated_size = size.SizeAllocation((100, 200), requested_size)
         allocated_size.height = 7 # Instead of 4+8=12.
         # The padding is 7 instead of 12.  That's a difference of 5. Divided by
         # two, it gives a reduction of -5//2=-3 on the top position of the
@@ -128,10 +136,9 @@ class TestCell(unittest.TestCase):
         cell = Cell(padded, Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 4, 8)
         cell.requestSize()
         requested_size = cell.requested_size
-        allocated_size = size.SizeAllocation(size.Pos(0, 0), requested_size)
+        allocated_size = size.SizeAllocation((0, 0), requested_size.copy())
         allocated_size.height = 50
-        self.assertRaises(size.SizeAllocationError,
-                          cell.allocateSize, allocated_size)
+        self.assertRaises(CellError, cell.allocateSize, allocated_size)
 
     def testAllocatedSizeInflateNoFill(self):
         """Cell.allocatedSize inflates the padding when needed."""
@@ -139,7 +146,7 @@ class TestCell(unittest.TestCase):
         cell = Cell(padded, Cell.EXPAND_PADDING, Cell.EXPAND_PADDING, 1, 2, 4, 8)
         cell.requestSize()
         requested_size = cell.requested_size
-        allocated_size = size.SizeAllocation(size.Pos(100, 200), requested_size)
+        allocated_size = size.SizeAllocation((100, 200), requested_size)
         allocated_size.height += 50
         # Adding 50 adds 50//2=25 to the top position.
         cell.allocateSize(allocated_size)

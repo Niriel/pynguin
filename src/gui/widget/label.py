@@ -4,8 +4,9 @@ Created on Nov 27, 2010
 @author: Niriel
 '''
 
+import math
 from widget import Widget
-from gui.layout import SizeRequisition, Sizeable, Parentable
+from gui.layout import Size, Sizeable, Parentable
 from gui.sprite import Label as LabelSprite
 
 __all__ = ['Label']
@@ -19,7 +20,11 @@ class Label(Widget, Sizeable, Parentable, LabelSprite):
         self._text = text
 
     def _requestSize(self):
-        return SizeRequisition(*self.getTextSize())
+        width, height = self.getTextSize()
+        zoom = self.ZOOM
+        width = int(math.ceil(float(width) / zoom))
+        height = int(math.ceil(float(height) / zoom))
+        return Size(width, height)
 
     def setText(self, text):
         if text == self._text:
@@ -29,7 +34,7 @@ class Label(Widget, Sizeable, Parentable, LabelSprite):
 
     def _refreshGui(self):
         if self._requestSize() != self.requested_size:
-            self.callForSizeNegotiation([])
+            self.callForSizeNegotiation()
             self.callForUpdate()
         else:
             self.callForRedraw()

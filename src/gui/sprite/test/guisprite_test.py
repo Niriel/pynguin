@@ -1,12 +1,12 @@
 '''
 Created on Nov 25, 2010
 
-@author: delforge
+@author: Niriel
 '''
 import unittest
-import guisprite
-import gui.size
 import pygame
+from gui.layout import size
+from gui.sprite import guisprite
 
 class TestGuiSprite(unittest.TestCase):
     def testGuiSpriteInit(self):
@@ -27,7 +27,7 @@ class TestGuiSprite(unittest.TestCase):
         """GuiSprite.adjustRect adapts the rect to the allocated_size."""
         s = guisprite.GuiSprite()
         s.rect = pygame.Rect(0, 0, 0, 0)
-        s.allocated_size = gui.size.SizeAllocation(10, 20, 30, 40)
+        s.allocated_size = size.SizeAllocation(10, 20, 30, 40)
         s.adjustRect()
         self.assertEquals(s.rect, pygame.Rect(10, 20, 30, 40))
 

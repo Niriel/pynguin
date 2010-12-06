@@ -1,7 +1,7 @@
 '''
 Created on Nov 25, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 from sizeable import Sizeable
@@ -9,7 +9,11 @@ from padding import Padding
 import size
 
 
-__all__ = ['Cell']
+__all__ = ['CellError', 'Cell']
+
+
+class CellError(RuntimeError):
+    pass
 
 
 class Cell(Sizeable):
@@ -96,7 +100,7 @@ class Cell(Sizeable):
         >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT, 42, 666).padding)
         Padding(42, 42, 666, 666)
 
-        >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT', 1, 2, 3, 4).padding)
+        >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 3, 4).padding)
         Padding(1, 2, 3, 4)
 
         >>> padding = Padding(1, 2, 3, 4)
@@ -231,7 +235,7 @@ class Cell(Sizeable):
         if expand == Cell.EXPAND_NOT:
             msg = "A cell with %s=Cell.EXPAND_NOT was asked to expand its %s" \
                   " beyond the requested size." % (expand_name, length_name)
-            raise size.SizeAllocationError(msg)
+            raise CellError(msg)
         elif expand == Cell.EXPAND_PADDED:
             # Inflate the padded and keep the padding.
             padded_length = getattr(self.allocated_size, length_name) - \

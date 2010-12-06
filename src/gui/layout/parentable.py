@@ -6,6 +6,15 @@ Created on Nov 29, 2010
 
 from common.weakrefplus import WeakRef
 
+class ParentableError(RuntimeError):
+    pass
+
+class NoParentError(ParentableError):
+    pass
+
+class AlreadyParentError(ParentableError):
+    pass
+
 class Parentable(object):
     """Inherit from this class objects you want to put in a container."""
     def __init__(self):

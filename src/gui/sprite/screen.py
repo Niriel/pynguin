@@ -14,4 +14,5 @@ class Screen(Window):
     def _createImage(self):
         self.image = pygame.display.get_surface()
         self.rect = self.image.get_rect()
+        print self.rect
         self.drawable_image = self.image

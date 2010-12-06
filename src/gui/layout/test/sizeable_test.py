@@ -21,15 +21,9 @@ class TestDocTest(unittest.TestCase):
 class TestSizeable(unittest.TestCase):
     class MockSizeable(sizeable.Sizeable):
         def _requestSize(self):
-            return size.SizeRequisition(32, 16)
+            return size.Size(32, 16)
         def allocateSize(self, size):
             self.allocated_size = size
-
-    def testInit(self):
-        """Sizeable.__init__ does its job."""
-        s = sizeable.Sizeable()
-        self.assertTrue(s.requested_size is None)
-        self.assertTrue(s.allocated_size is None)
 
     def testNegotiateSize(self):
         """Sizeable.negotiateSize allocates what it requests."""

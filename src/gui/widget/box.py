@@ -1,7 +1,7 @@
 '''
 Created on Nov 30, 2010
 
-@author: delforge
+@author: Niriel
 '''
 
 from gui.layout import HBox as HBoxLayout

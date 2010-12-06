@@ -5,8 +5,7 @@ Created on Nov 27, 2010
 '''
 import unittest
 import pygame
-import window
-import guisprite
+from gui.sprite import guisprite, window
 
 class windowTest(unittest.TestCase):
     def testInit(self):

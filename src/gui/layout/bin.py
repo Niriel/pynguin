@@ -4,7 +4,7 @@ Created on Nov 4, 2010
 @author: Bertrand
 '''
 
-from gui.layout.size import SizeRequisition
+from gui.layout.size import Size
 from container import Container
 
 
@@ -28,16 +28,22 @@ class Bin(Container):
     def __init__(self):
         Container.__init__(self)
 
+    def _getCell(self):
+        if self.cells:
+            return self.cells[0]
+        return None
+
     def _requestSize(self):
-        if not self.cells:
-            return SizeRequisition(0, 0)
-        cell = self.cells[0]
+        cell = self.cell
+        if not cell:
+            return Size(0, 0)
         cell.requestSize()
         return cell.requested_size
 
     def _allocateSize(self):
-        if self.cells:
-            self.cells[0].allocateSize(self.allocated_size)
+        cell = self.cell
+        if cell:
+            cell.allocateSize(self.allocated_size)
 
     def addChild(self, child, *args):
         """Add a child to the Bin.
@@ -50,3 +56,5 @@ class Bin(Container):
             msg = "Cannot add a second child to a Bin."
             raise BinHasAlreadyOneChildError(msg)
         Container.addChild(self, child, *args)
+
+    cell = property(_getCell)

@@ -30,6 +30,8 @@ class Button(Container, BinLayout, ButtonSprite):
         BinLayout.addChild(self, child, *args)
 
     def setMode(self, mode):
+        if mode == self.mode:
+            return
         VALID = (Button.MODE_NORMAL,
                  Button.MODE_PRESSED,
                  Button.MODE_HIGHLIGHT,
