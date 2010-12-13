@@ -1,0 +1,169 @@
+=============================================
+Managing sizes and positions of GUI elements.
+=============================================
+
+:abstract:
+    This document explains how elements (windows, buttons, etc.) can be placed
+    into each other to form a Graphical User Interface (GUI), and how their
+    sizes and positions can be computed.
+
+:public:
+    This tutorial is destined to developers who wish to understand the basics
+    of layouts in order to create their own, and to people curious of
+    understanding what is happening under the high-level.  It does not dive
+    into implementation details.
+
+:prerequisite:
+    None.
+
+:note:
+    The examples and illustrations in this document are there to explain the
+    principles, not to describe the implementation details.  For example,
+    although there may be a need for an element to play the role of the screen,
+    there is no need for a dedicated screen module or Screen class: the screen
+    object can be an instance of a Board layout.
+
+.. contents:: Index
+
+How are the elements placed inside each other?
+==============================================
+
+The elements form a tree.
+-------------------------
+
+In a GUI, the elements are placed in other elements.  They end up forming a
+tree.
+
+* An element that can contain one or more other elements is called a
+  `container`.
+* The elements contained in a container are called its `children`.
+* The container of a child is called its `parent`.
+
+A child can only have 0 or 1 parent, never more.
+
+For example::
+
+    screen
+     :. window "Connect to server."
+     :   :. vertical box
+     :       :. label "Server IP:"
+     :       :. text area
+     :       :. label "Server port:"
+     :       :. text area
+     :       :. horizontal box
+     :           :. button
+     :           :   :. label "Cancel."
+     :           :. button
+     :               :. label "OK."
+     :. window "Error."
+         :. vertical box
+             :. label "Could not reach server."
+             :. button
+                 :. label "OK."
+
+In this example, `screen` is a container.  It contains two children: the two
+`window` elements.  `screen` is the parent of these `window` elements.  Each
+`window` is also a container, both are parents of one child: a `vertical box`.
+`screen` is also the `root` of that tree.
+
+Note:
+
+    The order in which the windows are added to the screen does not need to
+    match the order in which they are displayed (and therefore which one
+    appears to be 'on top'): the user should be able to switch between windows.
+    This goes beyond the scope of this module.
+
+How to add an child element to a container element?
+---------------------------------------------------
+
+The elements are added into containers with their `addChild` method.
+
+The order in which the elements are added into each other does not matter::
+
+    window.addChild(button, ...)
+    button.addChild(label, ...)
+
+is equivalent to::
+
+    button.addChild(label, ...)
+    window.addChild(button, ...)
+
+Containers keep a list of their children.
+
+Containers let you choose the place within their list where you can add the new
+child.  For example, one may want the labels in a vertical box to appear in
+alphabetical order.  The child can be placed at the beginning, the end, at a
+given position, or before or after another child.
+
+How to remove an child element from a container element?
+--------------------------------------------------------
+
+Containers have a method `removeChild` that takes a child as a parameter.  It
+removes the child from the container.
+
+How to calculate the sizes and positions of the elements?
+=========================================================
+
+Principle.
+----------
+
+The process of calculating and assigning sizes and positions is called `size
+negotiation`.  It takes place in two steps:
+
+1. `size requisition`:
+    * The size requisition of an element is done with the `requestSize` method
+      of that element.  It takes no parameter.  Each element has a layout,
+      and that layout knows how to compute the size for this element.
+    * The element computes the size it needs to display its content [#]_.
+    * The element remembers the size it requests.
+    * If the element is a container, then it will often request the size of its
+      children (with their own `requestSize` method) before computing its own.
+2. `size allocation`:
+    * The size allocation of an element is done with the `allocateSize` method
+      of that element.  It takes a size and a position as a parameter.  Each
+      element has a layout, and that layout knows how to allocate the size and
+      position for this element.
+    * The allocated size can, but does not need to, equal the requested size.
+    * Whatever size the element has requested, it MUST obey and conform to the
+      allocated size.  There is NO exception.  The use of layouts such as
+      `scroll` can protect you from the cluttering that could happen when too
+      many elements have to share too little a surface.
+    * The element remembers the size and position that is allocated to it.
+    * If the element is a container, it derives an allocated size and position
+      for each of its children.  Then it calls `allocateSize` of each child
+      with these derived allocated size and position.
+
+Example.
+--------
+
+The three following lines are enough to negotiate the sizes and positions of
+all the elements of a window::
+
+    window.requestSize()
+    allocated_size = SizeAllocation((50, 60), (500, 300))
+    window.allocateSize(allocated_size)
+
+In the previous example, the window is placed on the position x=50 y=60,
+and its size is width=500 and height=300.  If we want to let the window free
+of choosing its own size::
+
+    window.requestSize()
+    allocated_size = SizeAllocation((50, 60), window.requested_size)
+    window.allocateSize(allocated_size)
+
+Further readings.
+=================
+* README.txt : quick overview of the package structure.
+* Docstring of __init__.py : more technical approach on the layouts and
+  the size negotiation mechanism.
+
+References and footnotes.
+=========================
+
+.. [#] This is not always possible at the level of this package.  For example,
+   a label needs to know the character font it is going to use in order to
+   compute the size it needs.  The font is an object which is not available in
+   this package, it is part of the package that takes care of rendering on the
+   screen (for example `PyGame`_).  Therefore, a Label class can not be
+   designed in this package.  At best, an abstract class can be.
+.. _PyGame: http://www.pygame.org/
