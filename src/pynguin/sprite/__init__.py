@@ -1,7 +1,13 @@
-from button import *
-from guisprite import *
-from label import *
-from textbox import *
-from screen import *
-from scroll import *
-from window import *
+"""Manages PyGame sprites to display GUI widgets.
+
+@author: Niriel
+
+"""
+
+from buttonsprite import ButtonSprite
+from guisprite import GuiSprite
+from labelsprite import LabelSprite
+from textboxsprite import TextBoxSprite
+from screensprite import ScreenSprite
+from scrollsprite import ScrollSprite
+from windowsprite import WindowSprite

@@ -5,11 +5,11 @@ Created on Nov 27, 2010
 """
 
 import pygame
-from window import Window
+from windowsprite import WindowSprite
 
-__all__ = ['Screen']
+__all__ = ['ScreenSprite']
 
-class Screen(Window):
+class ScreenSprite(WindowSprite):
     """A screen is a window that takes the display as drawing surface."""
 
     BG_COLOR = (255, 255, 255)

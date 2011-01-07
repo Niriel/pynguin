@@ -7,10 +7,10 @@ Created on Dec 2, 2010
 
 from guisprite import GuiSprite
 
-__all__ = ['TextBox']
+__all__ = ['TextBoxSprite']
 
-class TextBox(GuiSprite):
-    """TextBox is a sprite used to represent a one-line text editor."""
+class TextBoxSprite(GuiSprite):
+    """TextBoxSprite is a sprite used to represent a one-line text editor."""
     BG_COLOR = (255, 255, 255)
     TX_COLOR = (0, 0, 0)
 

@@ -8,7 +8,7 @@ Created on Nov 26, 2010
 import pygame
 from guisprite import GuiSprite
 
-__all__ = ['Window']
+__all__ = ['WindowSprite']
 
 class WindowError(RuntimeError):
     """Base class for exceptions in the window module."""
@@ -19,10 +19,10 @@ class SpriteNotInGroupError(WindowError):
 class SpriteAlreadyInGroupError(WindowError):
     """Raised when adding a sprite that was already added."""
 
-class Window(GuiSprite):
-    """A Window is a Sprite that draws other sprites onto itself.
+class WindowSprite(GuiSprite):
+    """A WindowSprite is a Sprite that draws other sprites onto itself.
 
-    The Window has a pygame sprite group that it uses to display widgets
+    The WindowSprite has a pygame sprite group that it uses to display widgets
     on its surface.
 
     This is handy:

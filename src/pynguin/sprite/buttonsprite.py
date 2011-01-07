@@ -8,10 +8,10 @@ Created on Dec 2, 2010
 from guisprite import GuiSprite
 import rectangle
 
-__all__ = ['Button']
+__all__ = ['ButtonSprite']
 
-class Button(GuiSprite):
-    """A Button is a rectangular sprite that looks like it can be pressed.
+class ButtonSprite(GuiSprite):
+    """A ButtonSprite is a rectangular sprite that looks like it can be pressed.
 
     Its appearance is set by the setMode method.
 

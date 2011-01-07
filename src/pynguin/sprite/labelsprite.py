@@ -7,22 +7,24 @@ Created on Nov 27, 2010
 import pygame
 from guisprite import GuiSprite
 
-class Label(GuiSprite):
-    """Label is a sprite that displays one line of text."""
+class LabelSprite(GuiSprite):
+    """LabelSprite is a sprite that displays one line of text."""
     SURFACE_FLAGS = pygame.SRCALPHA
     BG_COLOR = (0, 0, 0, 0) # Fully transparent.
     TX_COLOR = (0, 0, 0, 255) # Pure black.
 
     def __init__(self, font, text):
-        """Initialize a new Label sprite with its font and text."""
+        """Initialize a new LabelSprite sprite with its font and text."""
         GuiSprite.__init__(self)
         self._font = font
         self._text = text
     
     def _getText(self):
+        """Return the text of the label."""
         return self._text
     
     def _setText(self, text):
+        """Set the text of the label."""
         self._text = text
     
     def getTextSize(self):

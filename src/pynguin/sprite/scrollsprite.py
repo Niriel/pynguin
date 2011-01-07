@@ -5,7 +5,7 @@ Created on Dec 1, 2010
 
 @author: Niriel
 
-A Scroll is a GuiSprite that has two separate images :
+A ScrollSprite is a GuiSprite that has two separate images :
   - the image it displays on the screen ;
   - the image it draws its widgets on.
 The first is a subset of the second.
@@ -39,15 +39,15 @@ the portion of big_image to blit onto image is called "visible_rect".
 """
 
 import pygame
-from window import Window
+from windowsprite import WindowSprite
 
-__all__ = ['Scroll']
+__all__ = ['ScrollSprite']
 
-class Scroll(Window):
-    """Scroll is a window that only displays a part of itself."""
+class ScrollSprite(WindowSprite):
+    """ScrollSprite is a window that only displays a part of itself."""
     def __init__(self):
-        """Initialize a new Scroll."""
-        Window.__init__(self)
+        """Initialize a new ScrollSprite."""
+        WindowSprite.__init__(self)
         self.big_image = None
         self.big_rect = pygame.Rect(0, 0, 0, 0)
         self.visible_rect = pygame.Rect(0, 0, 0, 0)
@@ -81,7 +81,7 @@ class Scroll(Window):
         2. Draw a part of the drawable image on the visible one.
 
         """
-        Window._draw(self)
+        WindowSprite._draw(self)
         self._drawVisiblePart()
 
     def scrollTo(self, pos_x, pos_y):

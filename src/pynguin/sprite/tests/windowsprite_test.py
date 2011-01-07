@@ -5,7 +5,7 @@ Created on Nov 27, 2010
 """
 import unittest
 import pygame
-from pynguin.sprite import guisprite, window
+from pynguin.sprite import guisprite, windowsprite
 
 # pylint: disable-msg=R0904
 # Because unit tests have tons of public methods and that's normal. 
@@ -19,16 +19,16 @@ class WindowTest(unittest.TestCase):
     """Test the sprite.window module."""
     def testInit(self):
         """Window.__init__ does its job."""
-        win = window.Window()
+        win = windowsprite.WindowSprite()
         self.assertEquals(win._sprites_group.__class__.__name__,
                           'LayeredUpdates')
 
     def testGetSpritesAt(self):
         """Window.getSpritesAt return clicked children and itself."""
-        win1 = window.Window()
+        win1 = windowsprite.WindowSprite()
         spr1 = guisprite.GuiSprite()
         spr2 = guisprite.GuiSprite()
-        win2 = window.Window()
+        win2 = windowsprite.WindowSprite()
         spr3 = guisprite.GuiSprite()
         #
         win1.rect = pygame.Rect((200, 100), (300, 150))
