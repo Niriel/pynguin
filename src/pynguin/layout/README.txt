@@ -38,7 +38,8 @@ container.
 
 * boardlayout: the elements can go wherever they like.
 * boxlayout: the elements are placed in a row or column.
-* windowlayout: the position of the elements is relative to the window itself.
+* binlayout: only one element.
+* windowlayout: the position of the element is relative to the window itself.
 * scrolllayout: window that allows its content to take more space than itself.
 
 Further readings.

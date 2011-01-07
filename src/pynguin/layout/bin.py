@@ -25,6 +25,17 @@ class Bin(Container):
     def __init__(self):
         Container.__init__(self)
 
+    def _requestSize(self):
+        """Defers the size requisition to the layout."""
+        self._layout.requestSize(self.cell)
+        return self._layout.requested_size
+
+    def _allocateSize(self):
+        """Defers the size allocation to the layout."""
+        self._layout.allocateSize(self.allocated_size,
+                                  self.requested_size,
+                                  self.cell)
+
     def _getCell(self):
         """Return the first (and only) cell.
 
