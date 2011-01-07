@@ -1,32 +1,25 @@
-'''
+#! /usr/bin/python
+"""
 Created on Dec 2, 2010
 
 @author: Niriel
-'''
+"""
 
-import math
-import string
-from widget import Widget
-from gui.layout import Sizeable, Parentable, Size
-from gui.sprite import TextBox as TextBoxSprite
+from textwidget import TextWidget
+from pynguin.sprite import TextBoxSprite
 
-__all__ = ['TextBox']
+__all__ = ['TextBoxWidget']
 
-class TextBox(Widget, Sizeable, Parentable, TextBoxSprite):
-    VALID_CHARACTERS = string.letters + \
-                       string.digits + \
-                       string.punctuation + \
-                       ' '
-    def __init__(self, font):
-        Widget.__init__(self)
-        Sizeable.__init__(self)
-        Parentable.__init__(self)
-        TextBoxSprite.__init__(self, font)
-        self._text = ""
-    
-    def _requestSize(self):
-        width, height = self.getTextSize()
-        zoom = self.ZOOM
-        width = int(math.ceil(float(width) / zoom))
-        height = int(math.ceil(float(height) / zoom))
-        return Size(width, height)
+class TextBoxWidget(TextWidget):
+    """A widget for entering a line of text."""
+    def __init__(self, font, text):
+        """Initialize a new TextBoxWidget object.
+
+        Parameters:
+
+        * font: a Pygame.Font object.
+        * text: a string.
+
+        """
+        TextWidget.__init__(self)
+        self._sprite = TextBoxSprite(font, text)
