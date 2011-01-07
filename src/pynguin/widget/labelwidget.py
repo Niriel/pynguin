@@ -1,40 +1,51 @@
-'''
+"""
 Created on Nov 27, 2010
 
 @author: Niriel
-'''
+"""
 
-import math
-from widget import Widget
-from gui.layout import Size, Sizeable, Parentable
-from gui.sprite import Label as LabelSprite
+from sizeablewidget import SizeableWidget
+from pynguin.sprite import LabelSprite
 
-__all__ = ['Label']
+__all__ = ['LabelWidget']
 
-class Label(Widget, Sizeable, Parentable, LabelSprite):
+# pylint: disable-msg=R0903
+# To few public methods.  Labels don't do much.
+
+class LabelWidget(SizeableWidget):
+    """Widget displaying one line of text."""
+
     def __init__(self, font, text):
-        Widget.__init__(self)
-        Sizeable.__init__(self)
-        Parentable.__init__(self)
-        LabelSprite.__init__(self, font)
-        self._text = text
+        """Initialize a new LabelWidget object.
+
+        Parameters:
+
+        * font: a Pygame.Font object.
+        * text: a string.
+
+        """
+        SizeableWidget.__init__(self)
+        self._sprite = LabelSprite(font, text)
 
     def _requestSize(self):
-        width, height = self.getTextSize()
-        zoom = self.ZOOM
-        width = int(math.ceil(float(width) / zoom))
-        height = int(math.ceil(float(height) / zoom))
-        return Size(width, height)
+        """Return the size needed by the label to display itself.
+
+        The sprite is responsible for calculating it for it is the sprite
+        that possess the Font object able to render the text.
+
+        """
+        return self._sprite.getTextSize()
 
     def setText(self, text):
-        if text == self._text:
-            return
-        self._text = text
-        self._refreshGui()
+        """Set the text of the label.
 
-    def _refreshGui(self):
-        if self._requestSize() != self.requested_size:
-            self.callForSizeNegotiation()
-            self.callForUpdate()
-        else:
-            self.callForRedraw()
+        The text string is contained in the sprite, not in the widget.  This
+        method forwards the text to the sprite.
+
+        If the text that is set is identical to the text of the sprite,
+        then nothing is done. 
+
+        """
+        if text == self._sprite.text:
+            return
+        self._sprite.text = text
