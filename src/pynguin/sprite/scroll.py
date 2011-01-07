@@ -1,4 +1,5 @@
-'''Sprites that have a content bigger than what they display, and can scroll.
+#! /usr/bin/python
+"""Sprites that have a content bigger than what they display, and can scroll.
 
 Created on Dec 1, 2010
 
@@ -35,28 +36,60 @@ The rect determining the position of the sprite has to be called "rect".  The
 rect defining the shape of big_image is called "big_rect".  The rect delimiting
 the portion of big_image to blit onto image is called "visible_rect".
 
-'''
+"""
+
 import pygame
 from window import Window
 
 __all__ = ['Scroll']
 
 class Scroll(Window):
+    """Scroll is a window that only displays a part of itself."""
     def __init__(self):
+        """Initialize a new Scroll."""
         Window.__init__(self)
         self.big_image = None
         self.big_rect = pygame.Rect(0, 0, 0, 0)
         self.visible_rect = pygame.Rect(0, 0, 0, 0)
 
     def _createImage(self):
+        """Create two images: the visible one and the drawable one."""
+        # pylint: disable-msg=E1123,E1121
+
         self.image = pygame.Surface(self.rect.size, flags=self.SURFACE_FLAGS)
-        self.big_image = pygame.Surface(self.big_rect.size, flags=self.SURFACE_FLAGS)
+        self.big_image = pygame.Surface(self.big_rect.size,
+                                        flags=self.SURFACE_FLAGS)
         self.drawable_image = self.big_image
 
+    def _drawVisiblePart(self):
+        """Draw the visible part of the big image onto the visible image.
+
+        Note that NO check is done to make sure that the position of the
+        visible part of the big image is within the boundaries of the big
+        image.  Anything that is outside the boundaries will appear background-
+        colored.
+
+        """
+        self.visible_rect.size = self.rect.size # Just to make sure.
+        self.image.blit(self.big_image, (0, 0), self.visible_rect)
+
     def _draw(self):
-        self._drawBackground()
-        self._drawSprites()
+        """Draw the scroll.
+
+        1. Draw the background and the sprites on the drawable image.  That's
+           what Window._draw() does.
+        2. Draw a part of the drawable image on the visible one.
+
+        """
+        Window._draw(self)
         self._drawVisiblePart()
 
-    def _drawVisiblePart(self):
-        self.image.blit(self.big_image, (0, 0), self.visible_rect)
+    def scrollTo(self, pos_x, pos_y):
+        """Select the position of the portion of the big image to display.
+
+        Note that NO check is done to make sure that the position is within
+        the boundaries of the big image.  Anything that is outside the
+        boundaries will appear background-colored.
+
+        """
+        self.visible_rect.topleft = (pos_x, pos_y)
