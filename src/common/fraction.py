@@ -1,12 +1,12 @@
-'''
+"""
 Created on Nov 29, 2010
 
 @author: Niriel
-'''
+"""
 
 def best_rationals(afloat):
     """Approximate afloat with fractions.
-    
+
     Generate triples (num, den, error) where num/den is a best rational
     approximation of the float afloat and error is the difference (afloat -
     num/den).

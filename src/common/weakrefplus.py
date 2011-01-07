@@ -1,8 +1,8 @@
-'''
+"""
 Created on Nov 27, 2010
 
 @author: Niriel
-'''
+"""
 import weakref
 
 class WeakRef(object):
