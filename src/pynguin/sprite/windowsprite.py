@@ -109,3 +109,4 @@ class WindowSprite(GuiSprite):
         if not self._sprites_group.has(sprite):
             msg = "Cannot remove a sprite that is not in the group."
             raise SpriteNotInGroupError(msg)
+        self._sprites_group.remove(sprite)
