@@ -13,7 +13,7 @@ __all__ = ['CellError', 'Cell']
 
 
 class CellError(RuntimeError):
-    pass
+    """Base exception for the layout.cell module."""
 
 
 class Cell(Sizeable):
@@ -50,10 +50,6 @@ class Cell(Sizeable):
 
     """
 
-    EXPAND_NOT = 'not'
-    EXPAND_PADDING = 'padding'
-    EXPAND_PADDED = 'padded'
-
     def __init__(self, padded, expand_width, expand_height, *padding):
         """Create a new Cell object, binding a Sizeable and a Padding object.
 
@@ -62,7 +58,7 @@ class Cell(Sizeable):
         The first parameter is the Sizeable object you wish to surround with
         the padding.  We call this object "the padded".
 
-        >>> cell = Cell('a padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT)
+        >>> cell = Cell('a padded', 'not', 'not')
         >>> print cell.padded
         a padded
 
@@ -71,8 +67,8 @@ class Cell(Sizeable):
         attribute.
 
         The second and thirds parameters are expand_width and expand_height.
-        The valid values for these parameters are Cell.EXPAND_NOT,
-        Cell.EXPAND_PADDING and Cell.EXPAND_PADDED.
+        The valid values for these parameters are 'not',
+        'padding' and 'padded'.
 
         EXPAND_NOT: the cell cannot expand.  Trying to allocate a size bigger
         than its requested size will raise an exception.
@@ -86,20 +82,20 @@ class Cell(Sizeable):
         The other parameters define the padding.  You can pass the 0 to 4
         parameters defining a padding, or directly one padding object.
 
-        >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT).padding)
+        >>> print repr(Cell('padded', 'not', 'not').padding)
         Padding(0, 0, 0, 0)
 
-        >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT, 42).padding)
+        >>> print repr(Cell('padded', 'not', 'not', 42).padding)
         Padding(42, 42, 42, 42)
 
-        >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT, 42, 666).padding)
+        >>> print repr(Cell('padded', 'not', 'not', 42, 666).padding)
         Padding(42, 42, 666, 666)
 
-        >>> print repr(Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT, 1, 2, 3, 4).padding)
+        >>> print repr(Cell('padded', 'not', 'not', 1, 2, 3, 4).padding)
         Padding(1, 2, 3, 4)
 
         >>> padding = Padding(1, 2, 3, 4)
-        >>> cell = Cell('padded', Cell.EXPAND_NOT, Cell.EXPAND_NOT, padding)
+        >>> cell = Cell('padded', 'not', 'not', padding)
         >>> print repr(cell.padding)
         Padding(1, 2, 3, 4)
         >>> print cell.padding is padding
@@ -108,13 +104,14 @@ class Cell(Sizeable):
         """
         Sizeable.__init__(self)
 
-        VALID = (Cell.EXPAND_NOT, Cell.EXPAND_PADDED, Cell.EXPAND_PADDING)
-        VALIDSTR = "(Cell.EXPAND_NOT, Cell.EXPAND_PADDED, Cell.EXPAND_PADDING)"
-        if expand_width not in VALID:
-            msg = "expand_width must be in %s (%r given)." % (VALIDSTR, expand_width)
+        valid = ('not', 'padded', 'padding')
+        if expand_width not in valid:
+            msg = "expand_width must be in %s (%r given)." % (valid, \
+                                                              expand_width)
             raise ValueError(msg)
-        if expand_height not in VALID:
-            msg = "expand_height must be in %s (%r given)." % (VALIDSTR, expand_height)
+        if expand_height not in valid:
+            msg = "expand_height must be in %s (%r given)." % (valid, \
+                                                               expand_height)
             raise ValueError(msg)
 
         if isinstance(padded, Cell):
@@ -134,38 +131,45 @@ class Cell(Sizeable):
         else:
             self.padding = Padding(*padding)
 
-    def __getConstName(self, value):
-        return 'Cell.EXPAND_%s' % value.upper()
-
     def __repr__(self):
-        expand_width = self.__getConstName(self.expand_width)
-        expand_height = self.__getConstName(self.expand_height)
-        return "%s(%r, %s, %s, %r)" % (self.__class__.__name__, self.padded,
-                                       expand_width, expand_height,
+        return "%s(%r, %r, %r, %r)" % (self.__class__.__name__, self.padded,
+                                       self.expand_width, self.expand_height,
                                        self.padding)
 
     def __str__(self):
-        expand_width = self.__getConstName(self.expand_width)
-        expand_height = self.__getConstName(self.expand_height)
-        lines = [self.__class__.__name__]
-        lines.append("    padding      : %r" % self.padding)
-        lines.append("    expand_width : %s" % expand_width)
-        lines.append("    expand_height: %s" % expand_height)
-        lines.append("    padded       : %r" % self.padded)
+        lines = [self.__class__.__name__,
+                 "    padding      : %r" % self.padding,
+                 "    expand_width : %r" % self.expand_width,
+                 "    expand_height: %r" % self.expand_height,
+                 "    padded       : %r" % self.padded]
         return "\n".join(lines)
 
     def isExpandable(self, direction):
         """Return true if expand_<direction> is not 'not'."""
         attribute_name = 'expand_' + direction
-        return getattr(self, attribute_name) != Cell.EXPAND_NOT
+        return getattr(self, attribute_name) != 'not'
 
     def _requestSize(self):
         """Request the size of the padding + the size of the padded."""
         if self.padded is None:
             return self.padding.size
-        self.padded.requestSize()
         return self.padded.requested_size + self.padding.size
-        
+    
+    def requestSize(self, forward_request):
+        """Request the size of the padding + the size of the padded.
+
+        Parameter.
+        ==========
+
+        * `forward_request`: Boolean.
+          - True: requestSize is called on the padded object.
+          - False: requestSize is not called, and the last requested size is
+            used.
+
+        """
+        if forward_request:
+            self.padded.requestSize(forward_request)
+        Sizeable.requestSize(self, forward_request)
 
     def _shrink(self, length_name):
         """Return the padded width and extra padding when shrinking.
@@ -228,16 +232,16 @@ class Cell(Sizeable):
         """
         expand_name = 'expand_' + length_name
         expand = getattr(self, expand_name)
-        if expand == Cell.EXPAND_NOT:
-            msg = "A cell with %s=Cell.EXPAND_NOT was asked to expand its %s" \
+        if expand == 'not':
+            msg = "A cell with %s='not' was asked to expand its %s" \
                   " beyond the requested size." % (expand_name, length_name)
             raise CellError(msg)
-        elif expand == Cell.EXPAND_PADDED:
+        elif expand == 'padded':
             # Inflate the padded and keep the padding.
             padded_length = getattr(self.allocated_size, length_name) - \
                             getattr(self.padding, length_name)
             extra_padding = 0
-        elif expand == Cell.EXPAND_PADDING:
+        elif expand == 'padding':
             # Keep the padded and inflate the padding.
             padded_length = getattr(self.padded.requested_size, length_name)
             extra_padding = getattr(self.allocated_size, length_name) - \
@@ -264,18 +268,18 @@ class Cell(Sizeable):
         According to the values of expand_width and expand_height, the extra
         space goes either into an extra padding, or into the padded.
 
-        * expand = Cell.EXPAND_NOT
+        * expand = 'not'
 
         Forbidden.  If you ask for a wider space than the requested size with
         these conditions, then you made a programming error.  Raises
         SizeAllocationError.
 
-        * expand = Cell.EXPAND_PADDING
+        * expand = 'padding'
 
         The cell inflates and put its extra space around the padded, as
         extra padding.
 
-        * expand = Cell.EXPAND_PADDED
+        * expand = 'padded'
 
         The cell inflates and put its extra space inside the padded.
 

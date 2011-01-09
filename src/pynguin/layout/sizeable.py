@@ -41,7 +41,7 @@ class Sizeable(object):
               self.__class__.__name__
         raise NotImplementedError(msg)
 
-    def requestSize(self):
+    def requestSize(self, forward_request):
         """Compute the requested size and stores it.
 
         The size is computed is returned by the method _requestSize. Then it is
@@ -50,15 +50,31 @@ class Sizeable(object):
         size overrides the requested size (_requestSize is still called).  The
         forced size is copied in order to avoid surprises.
 
+        Parameter.
+        ==========
+        
+        * `forward_request`: Boolean
+          Some Sizeable contain other Sizeable objects: they are containers.
+          The size requested by a container usually depends on the size
+          requested by its content.  Setting `forward_request` to True will
+          cause the container to call `requestSize` on its content before
+          computing its own size.  Setting it to False will make the container
+          re-use the `requested_size` of its content without recomputing this
+          requested size first.  True is a safer value, but using False can
+          be useful for optimizing.
+
+          This parameter is unused in Sizeable, it is there for compatibility
+          with the containers.
+
         >>> import size
         >>> def giveASize():return size.Size(1, 2)
         >>> s = Sizeable()
         >>> s._requestSize = giveASize # Remove the NotImplementedError.
-        >>> s.requestSize()
+        >>> s.requestSize(True)
         >>> print s.requested_size
         Size(1, 2)
         >>> s.forced_requested_size = size.Size(10, 20)
-        >>> s.requestSize()
+        >>> s.requestSize(True)
         >>> print s.requested_size
         Size(10, 20)
         >>> print s.requested_size == s.forced_requested_size
@@ -67,9 +83,10 @@ class Sizeable(object):
         False
 
         """
-        self.requested_size = self._requestSize()
         if self.forced_requested_size:
             self.requested_size = self.forced_requested_size.copy()
+        else:
+            self.requested_size = self._requestSize()
 
     def _allocateSize(self):
         """Proceed to the size allocation.
@@ -131,8 +148,14 @@ class Sizeable(object):
         self.allocated_size = allocated_size.copy()
         self._allocateSize()
 
-    def negotiateSize(self):
+    def negotiateSize(self, forward_request):
         """Run the full cycle of size negotiation: request and allocation.
+
+        Parameter.
+        ==========
+
+        * `forward_request`: please refer to the documentation of the method
+          `requestSize`.
 
         WARNING: call this method only when you wish your Sizeable object
         to have the size it requests.  If you wish to impose a size which
@@ -151,7 +174,7 @@ class Sizeable(object):
         requestSize is used during the size allocation phase.
 
         """
-        self.requestSize()
+        self.requestSize(forward_request)
         pos = self.allocated_size.pos if self.allocated_size else (0, 0)
         new_allo_size = SizeAllocation(pos, self.requested_size)
         self.allocateSize(new_allo_size)

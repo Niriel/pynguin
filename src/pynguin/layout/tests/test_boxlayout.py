@@ -15,7 +15,7 @@ from mock import MockWidget
 class TestDocTest(unittest.TestCase):
     """Checks that the module boxlayout passes its doctests."""
     def testDocTest(self):
-        """module boxlayout passes its doctests."""
+        """Module layout.boxlayout passes its doctests."""
         import doctest
         failures, tests = doctest.testmod(m=boxlayout)
         del tests # Just to remove the eclipse warning on the unused variable.
@@ -59,6 +59,8 @@ class TestBox(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'padded', 'padded'),
                  Cell(MockWidget(40, 10), 'padding', 'padding'),
                  Cell(MockWidget(30, 15), 'padding', 'padding')]
+        for cell in cells:
+            cell.requestSize(True)
         # The widest padded is 40 pixels wide.  All will get 40 in length.
         # 3 * 40 = 120
         # The max height is 15, we should retrieve that.
@@ -75,6 +77,8 @@ class TestBox(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'padded', 'padded'),
                  Cell(MockWidget(40, 10), 'padding', 'padding'),
                  Cell(MockWidget(30, 15), 'padding', 'padding')]
+        for cell in cells:
+            cell.requestSize(True)
         # 20 + 40 + 30 = 90.
         # The max height is 15, we should retrieve that.
         my_box = boxlayout.BoxLayout(7, False)
@@ -89,6 +93,8 @@ class TestBox(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'padded', 'padded'),
                  Cell(MockWidget(40, 10), 'padding', 'padding'),
                  Cell(MockWidget(30, 15), 'padding', 'padding')]
+        for cell in cells:
+            cell.requestSize(True)
         # 20 + 40 + 30 = 90 for the widgets.
         my_box = boxlayout.BoxLayout(7, False)
         # Add two times 7 = 14 for the total spacing.
@@ -137,6 +143,8 @@ class TestBox(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'not', 'padded'),
                  Cell(MockWidget(40, 10), 'not', 'padding'),
                  Cell(MockWidget(30, 15), 'not', 'padding')]
+        for cell in cells:
+            cell.requestSize(True)
         # 20 + 40 + 30 = 90 for the widgets.
         my_box = boxlayout.BoxLayout(7, False)
         # Add two times 7 = 14 for the total spacing.
@@ -157,6 +165,8 @@ class TestBox(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'not', 'padded'),
                  Cell(MockWidget(40, 10), 'padding', 'padding'),
                  Cell(MockWidget(30, 15), 'padding', 'padding')]
+        for cell in cells:
+            cell.requestSize(True)
         # 20 + 40 + 30 = 90 for the widgets.
         my_box = boxlayout.BoxLayout(7, False)
         # Add two times 7 = 14 for the total spacing.

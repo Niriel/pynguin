@@ -10,7 +10,7 @@ from pynguin.layout import bin
 
 class TestBin(unittest.TestCase):
     def testDocTest(self):
-        """Module passes its doctests."""
+        """Module layout.bin passes its doctests."""
         import doctest
         failures, unused = doctest.testmod(m=bin)#, verbose=True)
         self.assertEquals(failures, 0)

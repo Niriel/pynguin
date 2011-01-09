@@ -239,7 +239,7 @@ class BoxLayout(Layout):
         setattr(result, secondary_length_name, secondary_length)
         return result
 
-    def _requestSize(self, cells):
+    def requestSize(self, cells):
         """Compute the requested size of the BoxLayout."""
         if not cells:
             return Size(0, 0)

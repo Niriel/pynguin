@@ -10,7 +10,7 @@ from pynguin.layout import size
 
 class TestDocTest(unittest.TestCase):
     def testDocTest(self):
-        """module size passes its doctests."""
+        """Module layout.size passes its doctests."""
         import doctest
         failures, tests = doctest.testmod(m=size)
         del tests # Just to remove the eclipse warning on the unused variable.

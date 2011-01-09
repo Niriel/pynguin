@@ -13,7 +13,7 @@ class ParentableTest(unittest.TestCase):
         pass
     
     def testDocTest(self):
-        """Module passes its doctests."""
+        """Module layout.parentable its doctests."""
         import doctest
         failures, unused = doctest.testmod(m=parentable)#, verbose=True)
         self.assertEquals(failures, 0)

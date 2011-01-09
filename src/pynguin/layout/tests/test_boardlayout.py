@@ -15,7 +15,7 @@ from mock import MockWidget
 class TestDocTest(unittest.TestCase):
     """Checks that the module box passes its doctests."""
     def testDocTest(self):
-        """module box passes its doctests."""
+        """Module layout.boardlayout passes its doctests."""
         import doctest
         failures, tests = doctest.testmod(m=boardlayout)
         del tests # Just to remove the eclipse warning on the unused variable.
@@ -29,6 +29,8 @@ class TestBoard(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'not', 'not'),
                  Cell(MockWidget(40, 10), 'not', 'not'),
                  Cell(MockWidget(30, 15), 'not', 'not')]
+        for cell in cells:
+            cell.requestSize(True)
         my_board = boardlayout.BoardLayout()
         requested_size = my_board.requestSize(cells)
         self.assertEquals(requested_size, my_board.preferred_size)
@@ -41,6 +43,8 @@ class TestBoard(unittest.TestCase):
         cells = [Cell(MockWidget(20, 10), 'not', 'not'),
                  Cell(MockWidget(40, 10), 'not', 'not'),
                  Cell(MockWidget(30, 15), 'not', 'not')]
+        for cell in cells:
+            cell.requestSize(True)
         my_board = boardlayout.BoardLayout()
         requested_size = my_board.requestSize(cells)
         allocated_size = SizeAllocation((1, 2), requested_size)

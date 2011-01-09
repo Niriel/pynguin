@@ -25,7 +25,7 @@ class BoardLayout(Layout):
         Layout.__init__(self)
         self.preferred_size = Size(*BoardLayout.PREFERRED_SIZE)
 
-    def _requestSize(self, cells):
+    def requestSize(self, cells):
         """Compute the requested size of a board: an arbitrary size.
         
         There is no reason for the board to have a size rather than another so

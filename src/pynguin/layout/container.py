@@ -173,8 +173,39 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
     def _requestSize(self):
         """Defers the size requisition to the layout."""
-        self._layout.requestSize(self.cells)
-        return self._layout.requested_size
+        return self._layout.requestSize(self.cells)
+
+    def requestSize(self, forward_request):
+        """Compute the requested size and stores it.
+
+        The size is computed is returned by the method _requestSize. Then it is
+        stored by requestSize in the requested_size attribute. If the Sizeable
+        object has a forced_requested_size that is not None, then this forced
+        size overrides the requested size (_requestSize is still called).  The
+        forced size is copied in order to avoid surprises.
+
+        Parameter.
+        ==========
+        
+        * `forward_request`: Boolean
+          Some Sizeable contain other Sizeable objects: they are containers.
+          The size requested by a container usually depends on the size
+          requested by its content.  Setting `forward_request` to True will
+          cause the container to call `requestSize` on its content before
+          computing its own size.  Setting it to False will make the container
+          re-use the `requested_size` of its content without recomputing this
+          requested size first.  True is a safer value, but using False can
+          be useful for optimizing.
+
+        """
+        for cell in self.cells:
+            # Always call requestSize on cells.  That is because when a widget
+            # is modified (Label becomes bigger because more text in it for
+            # example), the cell containing the widget is not aware of the
+            # modification.  But if you don't want the cell to recompute the
+            # size of its padded then it won't.
+            cell.requestSize(forward_request)
+        sizeable.Sizeable.requestSize(self, forward_request)
 
     def _allocateSize(self):
         """Defers the size allocation to the layout."""
