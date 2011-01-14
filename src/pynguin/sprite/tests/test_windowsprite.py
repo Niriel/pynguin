@@ -18,13 +18,13 @@ from pynguin.sprite import guisprite, windowsprite
 class WindowTest(unittest.TestCase):
     """Test the sprite.window module."""
     def testInit(self):
-        """Window.__init__ does its job."""
+        """WindowSprite.__init__ does its job."""
         win = windowsprite.WindowSprite()
         self.assertEquals(win._sprites_group.__class__.__name__,
                           'LayeredUpdates')
 
     def testGetSpritesAt(self):
-        """Window.getSpritesAt return clicked children and itself."""
+        """WindowSprite.getSpritesAt return clicked children and itself."""
         win1 = windowsprite.WindowSprite()
         spr1 = guisprite.GuiSprite()
         spr2 = guisprite.GuiSprite()
