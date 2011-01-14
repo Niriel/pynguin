@@ -65,4 +65,4 @@ class ButtonSprite(GuiSprite):
 
     def setMode(self, mode):
         """Set a mode: 'normal', 'highlighted', 'pressed', 'inactive'."""
-        self._draw_function = getattr('_draw%s' % mode.title())
+        self._draw_function = getattr(self, '_draw%s' % mode.title())
