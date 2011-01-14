@@ -5,34 +5,14 @@ Created on Nov 27, 2010
 """
 
 import pygame
-from guisprite import GuiSprite
+from textsprite import TextSprite
 
-class LabelSprite(GuiSprite):
+class LabelSprite(TextSprite):
     """LabelSprite is a sprite that displays one line of text."""
     SURFACE_FLAGS = pygame.SRCALPHA
-    BG_COLOR = (0, 0, 0, 0) # Fully transparent.
+    BG_COLOR = (255, 0, 0, 255) # Fully transparent.
     TX_COLOR = (0, 0, 0, 255) # Pure black.
 
-    def __init__(self, font, text):
-        """Initialize a new LabelSprite sprite with its font and text."""
-        GuiSprite.__init__(self)
-        self._font = font
-        self._text = text
-    
-    def _getText(self):
-        """Return the text of the label."""
-        return self._text
-    
-    def _setText(self, text):
-        """Set the text of the label."""
-        self._text = text
-    
-    def getTextSize(self):
-        """Compute the size needed for rendering the text as (width, height).
-
-        """
-        return self._font.size(self._text)
-    
     def _drawText(self):
         """Centers the text on the sprite image.
 
@@ -44,7 +24,7 @@ class LabelSprite(GuiSprite):
         often.
 
         """
-        text_image = self._font.render(self._text, True, self.TX_COLOR)
+        text_image = self.font.render(self.text, True, self.TX_COLOR)
         self_center = self.drawable_image.get_rect().center
         dest_rect = text_image.get_rect(center = self_center)
         if dest_rect.left < 0:
