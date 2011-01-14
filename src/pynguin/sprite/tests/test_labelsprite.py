@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
     def tearDown(self):
         """Shut down pygame."""
         pygame.quit()
-   
+
     # pylint: disable-msg=R0201
     # No references to 'self' in the next tests.
     def testDraw(self):

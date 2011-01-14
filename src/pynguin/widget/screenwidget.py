@@ -57,7 +57,7 @@ class ScreenWidget(WindowWidget):
         cell, if any.  Indeed, screen widgets are displayers, and nothing
         displays screen widgets: they are the ultimate displayers, the root of
         all.
-        
+
         Note that the input parameter `displayer` here is present for
         consistency with the other widgets but it is never used.  This is why
         this parameter `displayer` has a default value of None.  Just call

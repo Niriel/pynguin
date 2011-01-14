@@ -36,7 +36,7 @@ class Widget(object):
 
     def setDisplayer(self, displayer):
         """Assign the widget responsible for displaying this widget.
-        
+
         Example: two buttons are displayed on the surface of a window and that
         window is drawn on the surface of the screen::
 

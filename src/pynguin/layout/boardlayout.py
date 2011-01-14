@@ -16,18 +16,18 @@ class BoardLayout(Layout):
     PREFERRED_SIZE = (64, 64)
     def __init__(self):
         """Initialize a new BoardLayout object.
-        
+
         >>> my_board = BoardLayout()
         >>> print my_board.preferred_size
         Size(64, 64)
-        
+
         """
         Layout.__init__(self)
         self.preferred_size = Size(*BoardLayout.PREFERRED_SIZE)
 
     def requestSize(self, cells):
         """Compute the requested size of a board: an arbitrary size.
-        
+
         There is no reason for the board to have a size rather than another so
         we just make up something.
 

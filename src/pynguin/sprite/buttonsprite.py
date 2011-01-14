@@ -26,9 +26,9 @@ class ButtonSprite(GuiSprite):
 
     def __init__(self):
         """Initialize a new button.
-        
+
         The mode is set to 'normal'.
-        
+
         """
         GuiSprite.__init__(self)
         self._draw_function = None

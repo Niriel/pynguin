@@ -11,9 +11,9 @@ __all__ = ['BinLayout']
 
 class BinLayout(Layout):
     """Simplest layout for a Bin.
-    
+
     This layout is not abstract, you can use it.
-    
+
     """
     def requestSize(self, cell):
         """Return the requested size of the cell."""

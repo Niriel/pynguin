@@ -10,7 +10,7 @@ __all__ = ['GuiSprite']
 
 class GuiSprite(pygame.sprite.Sprite):
     """Ancestor of all sprite using the PYnGUIn system.
-    
+
     This class is abstract.  Please use its descendants.
 
     """

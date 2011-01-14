@@ -70,7 +70,7 @@ class TestGuiSprite(unittest.TestCase):
         self.assertTrue(sprite.image is None)
         sprite.update()
         self.assertFalse(sprite.image is None)
-    
+
     def testUpdateFromOtherSize(self):
         """GuiSprite.update calls _createImage if image has wrong size."""
         sprite = guisprite.GuiSprite()
@@ -84,7 +84,7 @@ class TestGuiSprite(unittest.TestCase):
 
     def testUpdateFromSameSize(self):
         """GuiSprite.update doesn't call _createImage if image has same size.
-        
+
         """
         sprite = guisprite.GuiSprite()
         sprite.rect = pygame.Rect(100, 200, 50, 50)
@@ -93,7 +93,7 @@ class TestGuiSprite(unittest.TestCase):
         sprite.update()
         image_after = sprite.image
         self.assertTrue(image_before is image_after)
-    
+
     def testUpdateDraw(self):
         """GuiSprite.update calls _draw."""
         sprite = guisprite.GuiSprite()

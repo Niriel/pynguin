@@ -27,7 +27,7 @@ class TestBinLayout(unittest.TestCase):
         layout = binlayout.BinLayout()
         requested_size = layout.requestSize(cell)
         self.assertEquals(requested_size, Size(10, 20))
-    
+
     def testAllocateSize(self):
         """BinLayout.allocateSize allocates the size of the cell."""
         cell = Cell(MockWidget(10, 20), 'padding', 'padding')

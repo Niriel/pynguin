@@ -1,8 +1,8 @@
-'''
+"""
 Created on Nov 4, 2010
 
-@author: Bertrand
-'''
+@author: Niriel
+"""
 
 def main():
     pass

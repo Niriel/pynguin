@@ -2,7 +2,7 @@
 """
 Created on Dec 12, 2010
 
-@author: delforge
+@author: Niriel
 """
 
 __all__ = ['Layout']

@@ -2,7 +2,7 @@
 """
 Created on Dec 12, 2010
 
-@author: delforge
+@author: Niriel
 """
 
 from size import SizeAllocation
@@ -18,7 +18,7 @@ class WindowLayout(BinLayout):
 
     The WindowLayout layout is made for Bin objects: objects that have only one
     cell.
-    
+
     Therefore, the position of the child in the window is always (0, 0).
 
     """

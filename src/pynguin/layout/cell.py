@@ -154,7 +154,7 @@ class Cell(Sizeable):
         if self.padded is None:
             return self.padding.size
         return self.padded.requested_size + self.padding.size
-    
+
     def requestSize(self, forward_request):
         """Request the size of the padding + the size of the padded.
 

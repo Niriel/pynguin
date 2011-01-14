@@ -14,7 +14,7 @@ class ContainerWidget(Widget, Container):
     LAYOUT_CLS = None
     def __init__(self):
         """Initialize a new ContainerWidget object.
-        
+
         Note that the layout is not specified here.
 
         """

@@ -75,7 +75,7 @@ class TestWidget(unittest.TestCase):
         my_widget.setDisplayer(displayer)
         my_widget.setDisplayer(None)
         self.assertEquals(displayer.sprites, [])
-    
+
     def testSetDisplayerChange(self):
         """Widget.setDisplayer moves the sprite when changing displayer."""
         displayer1 = MockDisplayer()

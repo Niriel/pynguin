@@ -2,7 +2,7 @@
 """
 Created on Dec 13, 2010
 
-@author: delforge
+@author: Niriel
 """
 
 import unittest
@@ -37,7 +37,7 @@ class TestBoard(unittest.TestCase):
         self.assertEquals(cells[0].requested_size, Size(20, 10))
         self.assertEquals(cells[1].requested_size, Size(40, 10))
         self.assertEquals(cells[2].requested_size, Size(30, 15))
-    
+
     def testAllocateSize(self):
         """BoardLayout.allocateSize gives the cells the size they want."""
         cells = [Cell(MockWidget(20, 10), 'not', 'not'),

@@ -32,7 +32,7 @@ def Homothecy(ori_lengths, dest_length):
 
     dest_length is an integer: the length you in which you want to fit all the
     widgets.
-    
+
     The result is a tuple containing two elements:
      - a list of positions,
      - a list of lengths.
@@ -128,17 +128,17 @@ class BoxLayout(Layout):
         """Initialize a new BoxLayout object.
 
         BoxLayout is abstract.
-        
+
         Parameters.
         -----------
 
         * spacing: positive integer.
-        
+
           The space that the BoxLayout allocates BETWEEN the cells, not
           around them.  Do not confuse with the padding of the cells.
-        
+
         * is_homogeneous: boolean.
-        
+
           True for a homogeneous BoxLayout (all the cells get the same size),
           False for a heterogeneous BoxLayout.
 

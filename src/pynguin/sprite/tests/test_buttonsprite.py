@@ -21,7 +21,7 @@ class TestButtonSprite(unittest.TestCase):
         """ButtonSprite.__init__ sets the mode to 'normal'."""
         my_button = buttonsprite.ButtonSprite()
         self.assertEquals(my_button._draw_function, my_button._drawNormal)
-    
+
     def testSetMode(self):
         """ButtonSprite.setMode accepts 'normal', 'inactive', ..."""
         my_button = buttonsprite.ButtonSprite()

@@ -2,7 +2,7 @@
 """
 Created on Dec 13, 2010
 
-@author: delforge
+@author: Niriel
 """
 
 from pynguin.layout.size import Size

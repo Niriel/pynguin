@@ -186,7 +186,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
         Parameter.
         ==========
-        
+
         * `forward_request`: Boolean
           Some Sizeable contain other Sizeable objects: they are containers.
           The size requested by a container usually depends on the size
@@ -409,7 +409,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
         Parameter `where`.
         ------------------
-        
+
         `where` can have several values, either string or
         tuple(string, object):
 
@@ -427,7 +427,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         * IndexError: the given index is out of bound.
         * NotAChildError: the given reference child is not in the container.
         * InvalidWhereContstructError: incorrect tuple or string.
-        
+
         Please read the documentation of the method insertCell for more details
         on the `where` parameter.
 

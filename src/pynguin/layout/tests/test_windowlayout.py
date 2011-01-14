@@ -13,14 +13,14 @@ from mock import MockWidget
 
 class TestWindowLayout(unittest.TestCase):
     """Test the WindowLayout layout."""
-    
+
     def testDocTest(self):
         """Module layout.windowlayout passes its doctests."""
         import doctest
         failures, tests = doctest.testmod(m=windowlayout)
         del tests # Just to remove the eclipse warning on the unused variable.
         self.assertEquals(failures, 0)
-    
+
     def testRequestSize(self):
         """WindowLayout.requestSize requests the size of its cell."""
         my_layout = windowlayout.WindowLayout()

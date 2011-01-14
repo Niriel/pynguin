@@ -52,7 +52,7 @@ class Sizeable(object):
 
         Parameter.
         ==========
-        
+
         * `forward_request`: Boolean
           Some Sizeable contain other Sizeable objects: they are containers.
           The size requested by a container usually depends on the size

@@ -11,7 +11,7 @@ from pynguin.layout import parentable
 class ParentableTest(unittest.TestCase):
     class MockParent(object):
         pass
-    
+
     def testDocTest(self):
         """Module layout.parentable its doctests."""
         import doctest

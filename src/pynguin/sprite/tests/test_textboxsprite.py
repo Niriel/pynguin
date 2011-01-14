@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
         self.assertEquals(my_sprite._draw_function, my_sprite._drawEdit)
         my_sprite.setMode('normal')
         self.assertEquals(my_sprite._draw_function, my_sprite._drawNormal)
-    
+
     # pylint: disable-msg=R0201
     # No references to 'self' in the next tests.
     def testDrawNormal(self):

@@ -60,7 +60,7 @@ class Bin(Container):
 
         If the Bin has already a child then BinHasAlreadyOneChildError is
         raised::
-        
+
             >>> from parentable import Parentable
             >>> b = Bin()
             >>> child1 = Parentable()
