@@ -19,3 +19,7 @@ class ScreenSprite(WindowSprite):
         self.image = pygame.display.get_surface()
         self.rect = self.image.get_rect()
         self.drawable_image = self.image
+
+    def getDisplaySize(self):
+        """Return the size of the display."""
+        return pygame.display.get_surface().get_rect().size
