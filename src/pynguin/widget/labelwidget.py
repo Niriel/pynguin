@@ -15,15 +15,4 @@ __all__ = ['LabelWidget']
 
 class LabelWidget(TextWidget):
     """Widget displaying one line of text."""
-
-    def __init__(self, font, text):
-        """Initialize a new LabelWidget object.
-
-        Parameters:
-
-        * font: a Pygame.Font object.
-        * text: a string.
-
-        """
-        TextWidget.__init__(self)
-        self._sprite = LabelSprite(font, text)
+    SPRITE_CLS = LabelSprite

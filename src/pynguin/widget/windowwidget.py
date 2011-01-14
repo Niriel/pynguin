@@ -1,25 +1,33 @@
-'''
+#! /usr/bin/python
+"""
 Created on Nov 25, 2010
 
 @author: Niriel
-'''
+"""
 
-from container import Container
-from gui.layout import Window as WindowLayout
-from gui.sprite import Window as WindowSprite
+from binwidget import BinWidget
+from pynguin.layout import WindowLayout
+from pynguin.sprite import WindowSprite
 
-__all__ = ['Window']
+__all__ = ['WindowWidget']
 
-class Window(Container, WindowLayout, WindowSprite):
-    def __init__(self):
-        Container.__init__(self)
-        WindowLayout.__init__(self)
-        WindowSprite.__init__(self)
+class WindowWidget(BinWidget):
+    """Window widget."""
+    SPRITE_CLS = WindowSprite
+    LAYOUT_CLS = WindowLayout
 
-    def _allocateSize(self):
-        WindowLayout._allocateSize(self)
-        Container._allocateSize(self)
+    def dispatchDisplayers(self, displayer):
+        """Recursively set the displayers of the widget tree.
 
-    def addChild(self, child, *args):
-        Container.addChild(self, child)
-        WindowLayout.addChild(self, child, *args)
+        WindowWidget.dispatchDisplayers calls setDisplayer(displayer) on itself
+        and dispatchDisplayers(self) on its cell, if any.  Indeed, window
+        widgets are displayers.
+
+        """
+        self.setDisplayer(displayer)
+        if self.cell:
+            self.cell.padded.dispatchDisplayers(self)
+
+    def addSprite(self, sprite, layer):
+        """Add the given sprite to window sprite."""
+        self._sprite.addSprite(sprite, layer)

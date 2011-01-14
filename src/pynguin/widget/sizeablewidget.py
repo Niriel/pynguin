@@ -22,3 +22,14 @@ class SizeableWidget(Widget, Parentable, Sizeable):
         Sizeable.__init__(self)
         Parentable.__init__(self)
         Widget.__init__(self)
+
+    def _adjustSpriteSize(self):
+        """Compute the size of the sprite from the widget allocated size."""
+        pos, size = self.allocated_size.asDeepTuple()
+        self._sprite.rect.topleft = pos
+        self._sprite.rect.size = size
+
+    def _allocateSize(self):
+        """Give the allocated size to its sprite, if any."""
+        if self._sprite:
+            self._adjustSpriteSize()

@@ -1,32 +1,26 @@
-'''
+"""
 Created on Dec 1, 2010
 
 @author: Niriel
-'''
+"""
 
-from container import Container
-from gui.layout import Scroll as ScrollLayout
-from gui.sprite import Scroll as ScrollSprite
-from gui.layout.size import Pos
+from windowwidget import WindowWidget
+from pynguin.layout import ScrollLayout
+from pynguin.sprite import ScrollSprite
+from pynguin.layout.size import Pos
 
-__all__ = ['Scroll']
+__all__ = ['ScrollWidget']
 
-class Scroll(Container, ScrollLayout, ScrollSprite):
+class ScrollWidget(WindowWidget):
+    LAYOUT_CLS = ScrollLayout
+    SPRITE_CLS = ScrollSprite
+
     def __init__(self):
-        Container.__init__(self)
-        ScrollLayout.__init__(self)
-        ScrollSprite.__init__(self)
+        WindowWidget.__init__(self)
         self.visible_pos = Pos(0, 0)
-
-    def _allocateSize(self):
-        # The order matters here.  You need to have finished all the allocation
-        # before you can set the rects.
-        ScrollLayout._allocateSize(self)
-        Container._allocateSize(self) # Calls adjustRect.
 
     def adjustRect(self):
         """Update the three rects."""
-        Container.adjustRect(self)
         self.adjustBigRect()
         self.adjustVisibleRect()
 
@@ -34,21 +28,14 @@ class Scroll(Container, ScrollLayout, ScrollSprite):
         cell = self.cell
         if cell:
             size = cell.allocated_size
-            zoom = self.ZOOM
-            self.big_rect.size = (size.width * zoom, size.height * zoom)
+            self._sprite.big_rect.size = (size.width, size.height)
         else:
-            self.big_rect.size = (0, 0)
+            self._sprite.big_rect.size = (0, 0)
 
     def adjustVisibleRect(self):
         visible_pos = self.visible_pos
-        zoom = self.ZOOM
-        self.visible_rect.topleft = (visible_pos.x * zoom,
-                                     visible_pos.y * zoom)
-        self.visible_rect.size = self.rect.size
-
-    def addChild(self, child, *args):
-        Container.addChild(self, child)
-        ScrollLayout.addChild(self, child, *args)
+        self._sprite.visible_rect.topleft = (visible_pos.x, visible_pos.y)
+        self._sprite.visible_rect.size = self._sprite.rect.size
 
     def scrollTo(self, left, top):
         if left != self.visible_pos.x or top != self.visible_pos.y:

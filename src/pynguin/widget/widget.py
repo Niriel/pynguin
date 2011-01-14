@@ -1,82 +1,91 @@
-'''
+#! /usr/bin/python
+"""
 Created on Nov 30, 2010
 
 @author: Niriel
-'''
+"""
 
 import weakref
-from common.weakrefplus import WeakRef
 
 __all__ = ['Widget']
 
+# pylint: disable-msg=R0903
+# To few public methods.  Don't care, it's abstract anyway. 
+
 class Widget(object):
-    ZOOM = 1
+    """Base for all the widgets.
+
+    This class is abstract: do not use it directly but use its descendants.
+
+    """
+    SPRITE_CLS = None
     def __init__(self):
+        """Initializes a new widget."""
         object.__init__(self)
-        self._size_negotiator = WeakRef(None)
-        self._drawers = None
+        # pylint: disable-msg=E1102
+        # Because I know SPRITE_CLS is not callable yet.
+        self._sprite = self.SPRITE_CLS() if self.SPRITE_CLS else None
+        # pylint: enable-msg=E1102
+        self._displayer = None
 
-    def _allocateSize(self):
-        self.adjustRect()
+    def getDisplayer(self):
+        """Retreives the widget responsible for displaying this widget."""
+        if self._displayer is None:
+            return None
+        return self._displayer()
 
-    def adjustRect(self):
-        """Make the rect property match the allocated_size property.
+    def setDisplayer(self, displayer):
+        """Assign the widget responsible for displaying this widget.
+        
+        Example: two buttons are displayed on the surface of a window and that
+        window is drawn on the surface of the screen::
 
-        The allocated_size property is created and maintained by a Sizeable
-        object.
+            button1.setDisplayer(window)
+            window.setDisplayer(screen)
+            button2.setDisplayer(window)
 
-        The rect property is created by the Sprite object.
+        The order of the calls to setDisplayer does not matter.
+
+        The displayer must have a addSprite and a removeSprite method.
+
+        When setting a new displayer, the sprite of the current widget (if not
+        None) is removed from the current displayer of the current widget (if
+        it has one) and added to the new displayer.
+
+        `None` is a valid value for the displayer.  In that case the widget
+        will not be displayed by any widget: it is invisible.  Although it is
+        still taken into account during the size negotiation it will simply
+        leave an empty space.
+
+        Setting the same displayer twice to the same widget has no effect:
+        setDisplayer returns immediately (no removal and addition of sprite
+        happens).
 
         """
-        size = self.allocated_size
-        zoom = self.ZOOM
-        self.rect.topleft = (size.left * zoom, size.top * zoom)
-        self.rect.size = (size.width * zoom, size.height * zoom)
+        old_displayer = self.getDisplayer()
+        if displayer == old_displayer:
+            return
 
-    def _findDrawers(self, drawers=None):
-        if self._drawers is not None:
-            return self._drawers
-        #print "Finding drawers for %r." % self
-        if drawers is None:
-            drawers = []
-            #print "  No drawers provided, set to []."
+        # Remove the sprite from the current (old) displayer.
+        sprite = self._sprite
+        if old_displayer and sprite:
+            old_displayer.removeSprite(sprite)
+
+        # Add the sprite to the new displayer.
+        if displayer:
+            if sprite:
+                displayer.addSprite(sprite, 0) # 0 is the default sprite layer.
+            self._displayer = weakref.ref(displayer)
         else:
-            #print "  Drawers provided: %r." % drawers
-            pass
-        if self.parent:
-            #print "  self has a parent: %r." % self.parent
-            drawers = self.parent._findDrawers(drawers)
-        self._drawers = list(drawers)
-        #print "  Assigning drawers to %r: %r (%x)." % (self, self._drawers, id(self._drawers))
-        if hasattr(self, 'sprites_group'):
-            drawers.append(weakref.proxy(self))
-            #print "  self is a drawer, appending to the list: %r." % drawers
-        #print "  Returning %r." % drawers
-        return drawers
+            self._displayer = None
 
-    def callForRedraw(self):
-        drawers = self._findDrawers()
-        for drawer in drawers:
-            # drawer may be None since drawers is a list of weakrefs. Let's not
-            # secure the code, I want it to break asap just to explore the
-            # possibilities.
-            drawer._draw()
+    def dispatchDisplayers(self, displayer):
+        """Recursively set the displayers of the widget tree.
 
-    def _findSizeNegotiator(self, caller):
-        negotiator = self._size_negotiator()
-        if negotiator:
-            return negotiator
-        parent = self.parent
-        if parent:
-            negotiator = parent._findSizeNegotiator(self)
-        self._size_negotiator.set(negotiator)
-        return negotiator
+        Widget.dispatchDisplayers simply calls setDisplayer.  This method is
+        overloaded on Containers to propagate it to the children.  Window
+        widgets also overload this method because they are displayers, and
+        they dispatch themselves to their children.
 
-    def callForSizeNegotiation(self):
-        negotiator = self._findSizeNegotiator(self)
-        negotiator.negotiateSize()
-
-    def callForUpdate(self):
-        parent = self.parent
-        if parent:
-            parent.callForUpdate()
+        """
+        self.setDisplayer(displayer)
