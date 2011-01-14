@@ -27,8 +27,7 @@ class Bin(Container):
 
     def _requestSize(self):
         """Defers the size requisition to the layout."""
-        self._layout.requestSize(self.cell)
-        return self._layout.requested_size
+        return self._layout.requestSize(self.cell)
 
     def _allocateSize(self):
         """Defers the size allocation to the layout."""

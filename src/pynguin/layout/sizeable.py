@@ -96,7 +96,7 @@ class Sizeable(object):
         allocateSize untouched.
 
         """
-        msg = "allocateSize not implemented for %s." % \
+        msg = "_allocateSize not implemented for %s." % \
               self.__class__.__name__
         raise NotImplementedError(msg)
 
@@ -164,14 +164,6 @@ class Sizeable(object):
 
         The position part of the allocation is not modified.  If the size had
         never been allocated before, then the position (0, 0) is used.
-
-        Important note: The behavior described above is merely a default
-        behavior.  You may very well decide to override this method in a child
-        class in order to allocate a fixed size for example.  For example, the
-        widget representing the entire screen should always impose its own size
-        since the screen has a fixed resolution.  You MUST still call
-        requestSize even though you don't use the requested size: the result of
-        requestSize is used during the size allocation phase.
 
         """
         self.requestSize(forward_request)

@@ -103,23 +103,22 @@ def GetExpandableIds(cells, length_name):
 
 
 class BoxLayout(Layout):
-    """A BoxLayout is a container that organizes child widgets in a row or a column.
+    """A BoxLayout organizes widgets in a row or a column.
 
     BoxLayout is an abstract class.  Use HBoxLayout and VBoxLayout.
 
-    BoxLayout objects have a spacing attribute.  This positive integer commands the
-    space that the BoxLayout requests and allocates BETWEEN the cells.  Do not
-    mistake the spacing and the padding.
+    BoxLayout objects have a spacing attribute.  This positive integer commands
+    the space that the BoxLayout requests and allocates BETWEEN the cells.  Do
+    not mistake the spacing and the padding.
 
-    A BoxLayout can be homogeneous or not.  A homogeneous box allocates the same
-    space for all the cells.  A non-homogeneous (heterogeneous) box does not do
-    that.  Define whether or not your BoxLayout is homogeneous by setting the
-    appropriate parameter to True or False in the constructor.  There is NO
-    GUARANTEE that changing the parameter after the box is constructed will
-    work as you expect.
+    A BoxLayout can be homogeneous or not.  A homogeneous box allocates the
+    same space for all the cells.  A non-homogeneous (heterogeneous) box does
+    not do that.  Define whether or not your BoxLayout is homogeneous by
+    setting the appropriate parameter to True or False in the constructor.
 
     """
 
+    # To overload in the subclasses.
     PRIMARY_LENGTH = 'undefined'
     SECONDARY_LENGTH = 'undefined'
     PRIMARY_COORD = 'undefined'
@@ -134,11 +133,14 @@ class BoxLayout(Layout):
         -----------
 
         * spacing: positive integer.
-            The space that the BoxLayout allocates BETWEEN the cells, not around
-            them.  Do not confuse with the padding of the cells.
+        
+          The space that the BoxLayout allocates BETWEEN the cells, not
+          around them.  Do not confuse with the padding of the cells.
+        
         * is_homogeneous: boolean.
-          True for a homogeneous BoxLayout (all the cells get the same size), False
-          for a heterogeneous BoxLayout.
+        
+          True for a homogeneous BoxLayout (all the cells get the same size),
+          False for a heterogeneous BoxLayout.
 
         >>> box = BoxLayout(8, True)
         >>> print box.spacing
@@ -164,10 +166,11 @@ class BoxLayout(Layout):
         biggest one.  This size is used for all the cells.
 
         This method is generic in the sense that it doesn't know whether the
-        BoxLayout is horizontal (HBoxLayout) or vertical (VBoxLayout).  See the classes HBoxLayout and
-        VBoxLayout.  The only difference between those two is that in one case, the
-        primary dimension will be the width and the secondary will be the
-        height, and in the other case it will be reversed.
+        BoxLayout is horizontal (HBoxLayout) or vertical (VBoxLayout).  See the
+        classes HBoxLayout and VBoxLayout.  The only difference between those
+        two is that in one case, the primary dimension will be the width and
+        the secondary will be the height, and in the other case it will be
+        reversed.
 
         So for a horizontal box, have the following attribute values:
             PRIMARY_LENGTH = 'width'
@@ -180,8 +183,17 @@ class BoxLayout(Layout):
         primary_length_name = self.PRIMARY_LENGTH
         secondary_length_name = self.SECONDARY_LENGTH
         max_size = Size(0, 0)
-        for cell in cells:
-            max_size |= cell.requested_size
+        try:
+            for cell in cells:
+                max_size |= cell.requested_size
+        except AttributeError as ex:
+            # I want to modify the text that's in the first arg.  But strings
+            # as well as tuples are immutable.  So I just make a list for
+            # a little while.
+            args = list(ex.args)
+            args[0] += ", did you forget to request the size of the padded?"
+            ex.args = tuple(args)
+            raise
         children_nb = len(cells)
         primary_length = children_nb * getattr(max_size, primary_length_name)
         secondary_length = getattr(max_size, secondary_length_name)
@@ -252,76 +264,125 @@ class BoxLayout(Layout):
         """Performs the size allocation."""
         # What is the length we can give to the cells ? It's the total
         # allocated length minus the spacing.
-        total_cell_length = getattr(allocated_size, self.PRIMARY_LENGTH)
-        total_cell_length -= self.spacing * (len(cells) - 1)
+        alloc_primary_len = getattr(allocated_size, self.PRIMARY_LENGTH)
+        total_cell_length = alloc_primary_len - self.spacing * (len(cells) - 1)
 
-        # Apply the Homothecy on the cells.
-        # The original lengths are the requested lengths.
-        # The destination length is the length calculated above.
-        # We obtain the position and length of every widget.
-        primary_lengths = [getattr(cell.requested_size,
-                                   self.PRIMARY_LENGTH)
-                           for cell in cells]
-        primary_coords, primary_lengths = Homothecy(primary_lengths,
-                                                    total_cell_length)
-
-        # The position needs to take the spacing into account.  Plus the
-        # position of the BoxLayout itself.
-        box_primary_coord = getattr(allocated_size, self.PRIMARY_COORD)
-        for i in xrange(len(primary_coords)):
-            primary_coords[i] += box_primary_coord + i * self.spacing
+        if total_cell_length > 0:
+            # Apply the Homothecy on the cells. For the heterogeneous case, the
+            # original lengths are the requested lengths.  For the homogeneous
+            # case, the original lengths are all equals to the biggest
+            # requested length. The destination length is the length calculated
+            # above. We obtain the position and length of every widget.
+            primary_lengths = [getattr(cell.requested_size,
+                                       self.PRIMARY_LENGTH)
+                               for cell in cells]
+            if self.is_homogeneous:
+                primary_lengths = [max(primary_lengths)] * len(cells)
+            primary_coords, primary_lengths = Homothecy(primary_lengths,
+                                                        total_cell_length)
+            # The position needs to take the spacing into account.  Plus the
+            # position of the BoxLayout itself.
+            box_primary_coord = getattr(allocated_size, self.PRIMARY_COORD)
+            for i in xrange(len(primary_coords)):
+                primary_coords[i] += box_primary_coord + i * self.spacing
+        else:
+            # We shrink so much that there is no room for the cells at all
+            # anymore.  Not even enough room for the spacing.
+            #
+            # But because we want to do things well, we are going to apply an
+            # homothecy on the spacing itself in order to shrink it properly.
+            # The coordinates resulting from the homothecy will give us the
+            # coordinates of our cells.
+            primary_lengths = [self.spacing] * (len(cells) - 1)
+            primary_coords, primary_lengths = Homothecy(primary_lengths,
+                                                        alloc_primary_len)
+            # The last cell starts after the last spacing.
+            primary_coords += [primary_coords[-1] + primary_lengths[-1]]
+            box_primary_coord = getattr(allocated_size, self.PRIMARY_COORD)
+            for i in xrange(len(primary_coords)):
+                primary_coords[i] += box_primary_coord
+            # No room for cells at all.
+            primary_lengths = [0] * len(cells)
 
         secondary_coord = getattr(allocated_size, self.SECONDARY_COORD)
         secondary_length = getattr(allocated_size, self.SECONDARY_LENGTH)
 
         for cell_id in xrange(len(cells)):
-            cell_size = SizeAllocation((primary_coords[cell_id],
-                                        secondary_coord),
-                                       (primary_lengths[cell_id],
-                                        secondary_length))
+            cell_size = SizeAllocation((0, 0), (0, 0))
+            setattr(cell_size, self.PRIMARY_COORD, primary_coords[cell_id])
+            setattr(cell_size, self.SECONDARY_COORD, secondary_coord)
+            setattr(cell_size, self.PRIMARY_LENGTH, primary_lengths[cell_id])
+            setattr(cell_size, self.SECONDARY_LENGTH, secondary_length)
             cells[cell_id].allocateSize(cell_size)
 
     def _allocateSizeInflate(self, allocated_size, cells):
         """Performs the size allocation."""
-        # What is the length we can give to the cells ? It's the total
-        # allocated length minus the spacing.
+        # What is the length we can give to the cells ?  It's the allocated
+        # length minus the spacing.
         total_cell_length = getattr(allocated_size, self.PRIMARY_LENGTH)
         total_cell_length -= self.spacing * (len(cells) - 1)
 
-        # Some cells can expand, some cannot.  The extra space is only for the
-        # cells that can expand.  We will apply an homothecy on the expandable
-        # cells.  For that, we need to identify them.  We also need to compute
-        # the available space for the expandable cells by removing the space
-        # claimed by the fixed cells.
-
-        lengths = [0] * len(cells)
-
-        exp_ids = []
-        exp_lengths = []
-        for cell_id, cell in enumerate(cells):
-            length = getattr(cell.requested_size, self.PRIMARY_LENGTH)
-            if cell.isExpandable(self.PRIMARY_LENGTH):
-                exp_ids.append(cell_id)
-                exp_lengths.append(length)
-            else:
+        # Compute an list of lengths, one length per cell: `lengths`.
+        if self.is_homogeneous:
+            # The homogeneous case is easy: pretend that all the cells have
+            # requested the same length: the length of the longest cell. Then
+            # apply an homothecy to make it fit the allocated size.
+            max_length = 0
+            for cell in cells:
+                length = getattr(cell.requested_size, self.PRIMARY_LENGTH)
+                if length > max_length:
+                    max_length = length
+                lengths = [max_length] * len(cells)
+            unused, lengths = Homothecy(lengths, total_cell_length)
+            del unused, max_length
+        else:
+            # Heterogeneous case.  Some cells can expand, some cannot.  The
+            # extra space is only for the cells that can expand.  We will apply
+            # an homothecy on the expandable cells.  For that, we need to
+            # identify them.  We also need to compute the available space for
+            # the expandable cells by removing the space claimed by the fixed
+            # cells.
+            lengths = [0] * len(cells)
+            exp_ids = []
+            exp_lengths = []
+            for cell_id, cell in enumerate(cells):
+                length = getattr(cell.requested_size, self.PRIMARY_LENGTH)
+                if cell.isExpandable(self.PRIMARY_LENGTH):
+                    # Take note of expandable cells for homothecy.
+                    exp_ids.append(cell_id)
+                    exp_lengths.append(length)
+                else:
+                    # Non-expandable cells need no homothecy.
+                    lengths[cell_id] = length
+            # Compute allocated length available for expandable cells.
+            total_exp_length = total_cell_length - sum(lengths)
+            # Perform the homothecy on the expandable cells.
+            unused, exp_lengths = Homothecy(exp_lengths, total_exp_length)
+            # Inject the result of the homothecy into the `lengths` list.
+            for cell_id, length in zip(exp_ids, exp_lengths):
                 lengths[cell_id] = length
-        total_exp_length = total_cell_length - sum(lengths)
-        unused, exp_lengths = Homothecy(exp_lengths, total_exp_length) # pylint: disable-msg=W0612,C0301
-        for cell_id, length in zip(exp_ids, exp_lengths):
-            lengths[cell_id] = length
+            # Make sure we don't reuse this stuff later.
+            del exp_ids, exp_lengths, total_exp_length, unused, cell_id
 
+        # Compute the positions from the lengths.
         coords = [getattr(allocated_size, self.PRIMARY_COORD)]
         for length in lengths:
             coords.append(coords[-1] + length + self.spacing)
 
+        # For the secondary (transverse) dimension, easy:
         secondary_coord = getattr(allocated_size, self.SECONDARY_COORD)
         secondary_length = getattr(allocated_size, self.SECONDARY_LENGTH)
-        for cell_id in xrange(len(cells)):
-            cell_size = SizeAllocation((coords[cell_id], secondary_coord),
-                                       (lengths[cell_id], secondary_length))
-            cells[cell_id].allocateSize(cell_size)
 
-    def _ideal(self, allocated_size, cells):
+        # Finally, allocate the size of each cell.
+        for cell, primary_coord, primary_length in zip(cells, coords, lengths):
+            cell_size = SizeAllocation((0, 0), (0, 0))
+            setattr(cell_size, self.PRIMARY_COORD, primary_coord)
+            setattr(cell_size, self.SECONDARY_COORD, secondary_coord)
+            setattr(cell_size, self.PRIMARY_LENGTH, primary_length)
+            setattr(cell_size, self.SECONDARY_LENGTH, secondary_length)
+            cell.allocateSize(cell_size)
+
+    def _allocateSizeIdeal(self, allocated_size, cells):
         """Performs the size allocation."""
         # Secondary dimension is the same for everybody.
         secondary_length = getattr(allocated_size, self.SECONDARY_LENGTH)
@@ -383,8 +444,7 @@ class BoxLayout(Layout):
                     can_expand_primary = True
                     break
             if not can_expand_primary:
-                msg = "Cannot inflate a BoxLayout if no widget can expand.  " \
-                      "You can avoid that by preventing your BoxLayout to expand."
+                msg = "Cannot inflate a BoxLayout if no widget can expand."
                 raise BoxError(msg)
 
         if allocated_secondary > requested_secondary:
@@ -394,8 +454,7 @@ class BoxLayout(Layout):
                     can_expand_secondary = True
                     break
             if not can_expand_secondary:
-                msg = "Cannot inflate a BoxLayout if no widget can expand.  " \
-                      "You can avoid that by preventing your BoxLayout to expand."
+                msg = "Cannot inflate a BoxLayout if no widget can expand."
                 raise BoxError(msg)
 
         if allocated_primary > requested_primary:
@@ -403,7 +462,7 @@ class BoxLayout(Layout):
         elif allocated_primary < requested_primary:
             self._allocatedSizeShrink(allocated_size, cells)
         else:
-            self._ideal(allocated_size, cells)
+            self._allocateSizeIdeal(allocated_size, cells)
 
 class HBoxLayout(BoxLayout):
     """HBoxLayout layout places its children in a row."""
@@ -413,7 +472,7 @@ class HBoxLayout(BoxLayout):
     SECONDARY_COORD = 'top'
 
 class VBoxLayout(BoxLayout):
-    """HBoxLayout layout places its children in a column."""
+    """VBoxLayout layout places its children in a column."""
     PRIMARY_LENGTH = 'height'
     SECONDARY_LENGTH = 'width'
     PRIMARY_COORD = 'top'
