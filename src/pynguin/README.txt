@@ -11,11 +11,14 @@ This package is itself divided into several packages:
 * sprite: renders the GUI elements on screen using `PyGame`_.
 * widget: binds layouts and sprites together in high-level objects.
 
-Users of 'gui' should only need to use the 'widget' package and let the
+Users of 'PYnGUIn' should only need to use the 'widget' package and let the
 packages 'layout' and 'sprite' take care of the low-level functionalities.
 
-Although `gui` was designed with PyGame in mind, `layout` does not use PyGame
-at all and can be re-used in other projects.
+Although `PYnGUIn` was designed with PyGame in mind, `layout` does not use
+PyGame at all and can be re-used in other projects.  Likewise, `widget` never
+directly uses PyGame and instead uses `sprite`.  `sprite` is the only package
+that imports PyGame.  That should increase the portability of the
+code.
 
 .. _`PyGame`:
     http://www.pygame.org
