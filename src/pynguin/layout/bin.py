@@ -55,7 +55,7 @@ class Bin(Container):
             return self.cells[0]
         return None
 
-    def addChild(self, child, where, expand_width, expand_height, *padding):
+    def addChild(self, child, expand_width, expand_height, *padding):
         """Add a child to the Bin.
 
         If the Bin has already a child then BinHasAlreadyOneChildError is
@@ -65,10 +65,10 @@ class Bin(Container):
             >>> b = Bin()
             >>> child1 = Parentable()
             >>> child2 = Parentable()
-            >>> b.addChild(child1, 'end', 'not', 'not')
+            >>> b.addChild(child1, 'not', 'not')
             >>> print b.cell.padded is child1
             True
-            >>> b.addChild(child2, 'end', 'not', 'not')
+            >>> b.addChild(child2, 'not', 'not')
             Traceback (most recent call last):
             ...
             BinHasAlreadyOneChildError: Cannot add a second child to a Bin.
@@ -77,7 +77,7 @@ class Bin(Container):
         if self.cells:
             msg = "Cannot add a second child to a Bin."
             raise BinHasAlreadyOneChildError(msg)
-        Container.addChild(self, child, where, expand_width, expand_height,
+        Container.addChild(self, child, 'end', expand_width, expand_height,
                            *padding)
 
     cell = property(_getCell, None, None, "First and only cell.")

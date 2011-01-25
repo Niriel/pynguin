@@ -39,7 +39,7 @@ class TestBinWidget(unittest.TestCase):
         """
         widget = SizeableWidget()
         my_container = binwidget.BinWidget()
-        my_container.addChild(widget, 'end', 'not', 'not')
+        my_container.addChild(widget, 'not', 'not')
         displayer = MockDisplayer()
         my_container.dispatchDisplayers(displayer)
         self.assertTrue(my_container.getDisplayer() is displayer)
