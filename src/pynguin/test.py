@@ -22,17 +22,17 @@ def main():
     #font_big = pygame.font.Font(None, 50)
 
     screen = ScreenWidget()
+    screen.altitude = 0
     box = VBoxWidget(0, True)
     label_hello = LabelWidget(font, "Hello,")
     label_world = LabelWidget(font,  "world !")
-    screen.addChild(box, 'end', 'padded', 'padded')
+    screen.addChild(box, 'padded', 'padded')
     box.addChild(label_hello, 'end', 'padding', 'padding')
     box.addChild(label_world, 'end', 'padded', 'padded')
     screen.dispatchDisplayers()
     screen.negotiateSize(True)
     screen._sprite.update()
-    for cell in box.cells:
-        print cell.allocated_size
+    print label_hello.altitude
     running = True
     clock = pygame.time.Clock()
     while running:

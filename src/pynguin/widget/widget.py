@@ -27,6 +27,7 @@ class Widget(object):
         self._sprite = self.SPRITE_CLS() if self.SPRITE_CLS else None
         # pylint: enable-msg=E1102
         self._displayer = None
+        self._altitude = -1
 
     def getDisplayer(self):
         """Retreives the widget responsible for displaying this widget."""
@@ -89,3 +90,13 @@ class Widget(object):
 
         """
         self.setDisplayer(displayer)
+
+    def _getAltitude(self):
+        """Return the altitude of the widget."""
+        return self._altitude
+    
+    def _setAltitude(self, value):
+        """Set the altitude of the widget."""
+        self._altitude = value
+    
+    altitude = property(_getAltitude, _setAltitude, None, "Altitude")

@@ -1,0 +1,137 @@
+=============================================================
+How the GUI adapts itself to the modification of its widgets.
+=============================================================
+
+Example:
+--------
+Here is our GUI::
+    screen
+      :.. window
+            :.. button
+
+The difficulty resides in the order in which to resize/redraw the widgets.  A
+naive approach would be to draw everything, starting from the root of the tree
+and going up to the topmost widgets: screen then window then button.  But for
+two reasons we are not doing that:
+
+* Not all the widgets are drawn directly on the display.  The button is drawn
+  on its window (so that windows can control their own layers of sprites
+  without interference with the layers of other windows).  Therefore the window
+  must be up to date before being drawn on the display.  The order becomes
+  button - window - display.
+* Not all the widgets change between each frame.  Our CPU has better things to
+  do than drawing the same things onto the same things all the time.  Therefore
+  we introduce the notion of dependency.  The button depends on the window
+  which depends on the display to be updated.  If the button changes, then
+  we update it, then we update the window, then we update the display (the
+  other windows are left untouched).
+* It is useless to draw something that will never be seen.  So if a widget
+  changes several times between two frames, only the most recent version
+  is relevant and should be drawn.  Once again, let's use our CPU to do more
+  interesting things.
+* We must make a clear distinction between the widgets and their sprites.  The
+  sprites are the visible part of the widgets, and the displaying of the
+  sprites is what we are trying to optimize here.  The widgets themselves
+  constitute a model and are always immediately updated.
+
+Here are the modifications that can affect a widget:
+
+* A widget appears.
+* A widget disappears.
+* A widget changes its appearance.
+* A widget changes its size.
+
+The GUI should stack up the required sprite modifications between two frames.
+It should remove duplicates.  And it should apply the remaining modifications
+on the widgets that still exist at that time.  We can consider it as some sort
+of caching mechanism.
+
+Imagine we are applying these modifications to button::
+
+    button.setMode('highlighted')     # (a)
+    button.setFont(font)              # (b)
+    button.setText(text)              # (c)
+    button.setMode('pressed')         # (d)
+
+The commands (a) and (d) change the appearance of the button but not its size,
+while the commands (b) and (c) are very likely to change its size.
+
+The methods setMode, setFont and setText send some signals to some manager.
+The manager collects them in one or several lists, for example::
+
+    to_do = [(redraw, button), (resize, button), (resize, button),
+             (redraw, button)]
+
+And the manager cleans that list.
+
+    to_do = [(resize, button), (redraw, button)]
+
+Here we see that resizing a widget must be done before we redraw it.  Kinda
+obvious.  So there is a hierarchy, a system of priorities or an order to the
+modifications.
+
+An alternative is to make the widgets hold their own list.  But then we end up
+having to interrogate every widget and that'd dumb.
+
+Where it gets tricky is that the modification of one widget can need the
+modification of other widgets.
+
+For example: (a).  Once the button has redrawn itself, the window containing
+it must redraw itself.  And then so must the display.
+
+For example: One resizes the window.  Then all its content must be resized.
+But then, the button should not ask the window to resize itself to accommodate
+its new size or we are stuck in an endless loop.
+
+Since changing the size of a widget forces us to redraw it, there is no need
+to store both a resize request and a redraw request from the button.  Unless
+we consider than a resize is not a redraw, and in that case each time the
+button asks to be resized it also explicitly asks to be redrawn.  I think the
+second solution is more clear, even though it implies one more line to type for
+the developer, and maybe a bit more work to do for the GUI manager (whatever
+its nature is).
+
+Redrawing.
+
+Let's imagine the following situation::
+
+    screen
+      :.. window1
+      :     :.. button1
+      :     :.. button2
+      :.. window2
+            :.. button3
+
+/!\ Be careful:
+
+* Keep only weak references to the widgets to update.  Widget may have
+  disappeared.
+* Resolve dependencies at the end only.
+
+
+
+IDEA: each widget has a depth/altitude depending on the nb of parents they
+have.  We draw them in a matching order.  Note that the altitude has nothing
+to do with the sprite layer.
+
+The altitude is managed by the widgets are they are being added and removed
+from containers.  Changing the altitude of a widget changes that of its
+children.
+
+======= =========
+widget  altitude
+======= =========
+display 0
+window1 1
+window2 1
+button1 2
+button2 2
+button3 2
+======= =========
+
+Widgets are drawn in order of decreasing altitude.
+
+For the implementation, I see a dictionary (or maybe a list?  trickier).  Keys
+are altitudes, values are lists of widgets.  There may be holes in the
+dictionary because some widgets do not have sprites and therefore do not need
+a redraw (a HBox for instance).  However, even HBoxes are subject to resizing.

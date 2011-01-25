@@ -35,3 +35,27 @@ class BinWidget(Widget, Bin):
         self.setDisplayer(displayer)
         if self.cell:
             self.cell.padded.dispatchDisplayers(displayer)
+
+    def addChild(self, child, expand_width, expand_height, *padding):
+        """Add child to the container.
+
+        Parameters.
+        ===========
+
+        - child: the child to add.
+        - expand_width: 'not', 'padding' or 'padded'.
+        - expand_height: 'not', 'padding' or 'padded'.
+        - padding: a Padding object or 1, 2 or 4 integers.
+
+        Parameters expand_* and padding.
+        --------------------------------
+
+        For expand_width, expand_height and padding, please refer to the
+        documentation of Cell.
+
+        This method overloads Bin.addChild.  It calls Bin.addChild and then
+        assigns an altitude to the child: that of the bin + 1.
+
+        """
+        Bin.addChild(self, child, expand_width, expand_height, *padding)
+        child.altitude = self.altitude + 1
