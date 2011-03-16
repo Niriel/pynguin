@@ -116,7 +116,7 @@ to do with the sprite layer.
 
 The altitude is managed by the widgets are they are being added and removed
 from containers.  Changing the altitude of a widget changes that of its
-children.
+children.  The altitude measures the number of parents.
 
 ======= =========
 widget  altitude
@@ -135,3 +135,139 @@ For the implementation, I see a dictionary (or maybe a list?  trickier).  Keys
 are altitudes, values are lists of widgets.  There may be holes in the
 dictionary because some widgets do not have sprites and therefore do not need
 a redraw (a HBox for instance).  However, even HBoxes are subject to resizing.
+The values of this dictionary are sets of widgets.
+
+
+
+We said we had four ways of changing the GUI: destruction, creation, resizing,
+redrawing.  Is there more ?
+
+Say we have a Display widget that represents the video memory, what is being
+shown on the monitor.  Imagine that for this display we have several screens:
+the login screen, the inventory screen, the main map screen ,etc.  Assigning
+one of these screens to the display needs some thinking.
+
+These screens are most possibly all in memory even though they are not shown.
+They are updated by events in the game even if they are not shown.  They are
+ready to be shown.  Doing that looks handy.  But:
+- use CPU for probably nothing.
+- gui's a vies, not a controller therefore it should not need to be active at
+all time.  Letting it on would make the developer start relying on the GUI to
+make intelligent computations.  Yuk.
+
+So: WE DO NOT UPDATE screens that are not displayed.  They are disconnected
+from the event managers.  Therefore nothing will happen to them and they will
+not ask to be redrawn or anything.  Unless the programmer does something dirty.
+Well that's easy: if a widget asks to be redrawn, but doesn't have parents down
+to the altitude of zero then there is an error somewhere and an exception must
+be raised.
+
+Now, what about assigning a screen to a display ?  Then a full update is done
+for a complete recalculation of the entire GUI.  This full update contains:
+recursive size negotiation, followed by full recusive drawing.
+
+Sprites do have a `update` method.  I think I should not use it.  This method
+is here for when we call `update` on a group.  But we never do.  It makes no
+sense, at least not yet.
+
+TODO: rename the `update` method of sprites.
+TODO: rename Screen widget and modure into Display.
+TODO: think of the need for a Screen widget.
+
+We need an object, module or whatever, that will take care of redrawing and
+resizing what has to be redrawn or resized.  We can make that part of the
+Display sprite.  Or we separate it.  Dunno what's best.  Say a module for now,
+then it's easy to wrap it later.  Maybe.  Let's call that module `refresh`.
+
+Button does::
+
+    import refresh
+    refresh.AskForSizeNegotiation(self)
+    refresh.AskForRedraw(self)
+
+What module does::
+
+    to_resize = {} # Dict of sets, key is integer altitude.
+    to_redraw = {}
+
+    def AskForSizeNegotiation(wid):
+        global to_resize
+        to_resize[wid.altitude].add(wid) # Sets can contain elems once only.
+
+    def AskForRedraw(wid):
+        global to_redraw
+        to_redraw[wid.altitude].add(wid)
+
+    # Note the similarities of AskToRedraw and AskToResize.  We may want to
+    # merge the two somehow.
+
+    def ProceedToSizeNegotiation():
+        global to_resize
+        altitudes = to_resize.keys()
+        altitudes.sort()
+        altitudes.reverse()
+
+        # Add all the parents of all the widgets.
+        # We start at the highest altitude.  Parents are added to the altitude
+        # just below.  So at the next iteration we have a full list of parents.
+        for altitude in altitudes:
+            for widget in to_resize[altitude]:
+                parent = widget.parent
+                if parent:
+                    AskForSizeNegotiation(parent)
+                    # Additional check here ?  Only Display objects should
+                    # not have parents.
+
+        # Negotiate the sizes.
+        for altitude in altitudes:
+            widgets = to_resize[altitude]
+            while widgets:
+                widget = widgets.pop()
+                widget.requestSize(False) # False means no recursion.
+                allocated_size = AllocatedSize((0, 0), widget.requested_size)
+                widget.allocateSize(allocated_size)
+        # The end works because the loop ends with widget being the root.
+        # We assume here that there is only one root: the Display.
+        to_resize.clear() # useful ?  All the sets are empty now.
+
+    def ProceedToRedraw():
+        global to_redraw
+        altitudes = to_redraw.keys()
+        altitudes.sort()
+        altitudes.reverse()
+
+        # Add all the parents of all the widgets.
+        # Redrawing is a bit different from resizing: only the widgets that
+        # have a sprite can be redrawn.  So only widgets with sprites are added
+        # to the list.  BUT we do not want to break the chain: in the case
+        # of a window-hbox-button, window and button have sprites and hbox
+        # doesn't.  Even though hbox should not appear in to_redraw, window
+        # should.  That's why we take all the chain of parents and browse
+        # it for sprites. 
+            for widget in to_redraw[altitude]:
+                parent = widget.parent
+                while parent:
+                    if parent.sprite:
+                        AskForRedraw(parent)
+                    parent = parent.parent
+
+        # Negotiate the sizes.
+        for altitude in altitudes:
+            for widget in to_resize[altitude]:
+                widget.requestSize(False) # False means no recursion.
+        allocated_size = AllocatedSize((0, 0), widget.requested_size)
+        widget.allocateSize(allocated_size)
+        # The end works because the loop ends with widget being the root.
+        # We assume here that there is only one root: the Display.
+        to_resize.clear()
+
+
+
+Where to put that code ?
+========================
+
+I think that all these operations are not to any widget to perform.  Or is it ?
+I could make the Display widget do it. But then I need a pointer to it and also
+make sure that there is only one Widget, and make it accessible to everybody.
+In short: global variable, or singleton.  Which is dumb.  I'll be better off
+with just a couple of functions on a module.

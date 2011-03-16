@@ -1,0 +1,27 @@
+================
+PYnGUIn, vision.
+================
+
+The pygame package does not come with a GUI.  Several users have created
+GUI packages for pygame.  However I could not use them, either because they
+would not work (obvious immediate bug in a release) or they would work
+'too well'.  By 'too well' I mean, tongue in cheek, that the package does
+provide a complete GUI system which perfectly reacts to mouse and keyboard
+events.  Suck a package comes of course with its own main loop, event system,
+event manager, etc..  It forces the user (me) to conform to their main loop.
+And then I would like to use a network library, like Twisted, which also wants
+me to use their main loop.  I can imagine the nightmare of having to merge them.
+Well, no thanks.  Furthermore, the GUI is for me almost an anecdote in my
+projects.  I want my code to also run on command line, or even on a server
+without any screen or keyboard.  I see the GUI as a bonus feature, a plugin.
+In the MVC (Model View Controller) pattern I like to use for my game, I want
+the GUI to just be yet-another set of views and controllers, and I do NOT want
+my application to revolve around it.
+
+That is why I need a GUI system that DOES NOT WORK.  PYnGUIn is such a system.
+PYnGUIn gives you the widgets and makes sure that their representation and
+organization remains consistent.  It makes sure that things that need to be
+redrawn because they have been modified are redrawn.  But it does not do more.
+It does not react to a mouse click.  But it does provide you with a way of
+knowing which widget is found at pixel (x, y), thereby allowing you to handle
+the mouse clicking yourself.

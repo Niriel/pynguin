@@ -13,8 +13,8 @@ Defining sizes and sizeable objects.
 
 All the elements of a GUI are sizeable objects.
 
-* size: defines the notions of `size` and `position`.
-* sizeable: base class for elements that have a size and a position.
+* `size`: defines the notions of `size` and `position`.
+* `sizeable`: base class for elements that have a size and a position.
   Implements the bases of `size negotiation` and `size requisition`.
 
 Providing a mechanism to put elements into other elements.
@@ -24,11 +24,11 @@ Containers are elements that can contain other elements.  An element in a
 container is called `child` of that container, and the container is its
 `parent`.
 
-* parentable: base class for elements that can be placed in a container.
-* container: base class for elements that can contain other elements.
-* bin: a container that can contain only one element.
-* padding: define the empty space around a child.
-* cell: binds a child and its padding together.
+* `parentable`: base class for elements that can be placed in a container.
+* `container`: base class for elements that can contain other elements.
+* `bin`: a container that can contain only one element.
+* `padding`: define the empty space around a child.
+* `cell`: binds a child and its padding together.
 
 Placing children inside containers.
 -----------------------------------

@@ -5,7 +5,6 @@ Created on Nov 29, 2010
 """
 
 import pygame
-from pynguin.layout import size
 from pynguin.widget import *
 
 EVENT_QUIT = pygame.QUIT

@@ -40,7 +40,7 @@ class Padding(object):
     >>> print p.left, p.right, p.top, p.bottom
     1 2 42 4
 
-    It also has three derived attributes:
+    It also has three read-only derived attributes:
         - width
         - height
         - size
@@ -54,6 +54,7 @@ class Padding(object):
 
     The size attribute creates a Size object using the width and height of the
     Padding object as parameters.
+
     >>> print Padding(1, 2, 4, 8).size
     Size(3, 12)
 
@@ -251,4 +252,4 @@ class Padding(object):
     right = property(_getRight, _setRight)
     top = property(_getTop, _setTop)
     bottom = property(_getBottom, _setBottom)
-    # \\ Beginning of block to remove in production.
+    # \\ End of block to remove in production.

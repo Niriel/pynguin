@@ -12,6 +12,9 @@ __all__ = ['Widget']
 # pylint: disable-msg=R0903
 # To few public methods.  Don't care, it's abstract anyway. 
 
+# TODO: think whether I need this displayer thing or not.  I'm pretty sure I
+# don't.
+
 class Widget(object):
     """Base for all the widgets.
 
