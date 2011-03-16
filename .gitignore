@@ -12,3 +12,6 @@
 .project
 .pydevproject
 
+# Backup files from emacs and gedit.
+*.*~
+
