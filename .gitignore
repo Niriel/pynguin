@@ -12,3 +12,6 @@
 .project
 .pydevproject
 
+# Temporaty files created by emacs or gedit.
+*.*~
+
