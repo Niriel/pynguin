@@ -5,13 +5,13 @@ Created on Nov 25, 2010
 @author: Niriel
 """
 
-from binwidget import BinWidget
+from containerwidget import ContainerWidget
 from pynguin.layout import WindowLayout
 from pynguin.sprite import WindowSprite
 
 __all__ = ['WindowWidget']
 
-class WindowWidget(BinWidget):
+class WindowWidget(ContainerWidget):
     """Window widget."""
     SPRITE_CLS = WindowSprite
     LAYOUT_CLS = WindowLayout
@@ -25,8 +25,8 @@ class WindowWidget(BinWidget):
 
         """
         self.setDisplayer(displayer)
-        if self.cell:
-            self.cell.padded.dispatchDisplayers(self)
+        for cell in self.cells:
+            cell.padded.dispatchDisplayers(self)
 
     def addSprite(self, sprite, layer):
         """Add the given sprite to window sprite."""

@@ -5,12 +5,13 @@ Created on Dec 12, 2010
 @author: Niriel
 """
 
+from size import Size
 from size import SizeAllocation
-from binlayout import BinLayout
+from layout import Layout
 
 __all__ = ['WindowLayout']
 
-class WindowLayout(BinLayout):
+class WindowLayout(Layout):
     """A WindowLayout manages only one cell and sets its position to (0, 0).
 
     The idea of a window is that the children they contain have their position
@@ -23,11 +24,19 @@ class WindowLayout(BinLayout):
 
     """
 
-    def allocateSize(self, allocated_size, requested_size, cell):
+    def requestSize(self, cells):
+        """Return the max."""
+        requested_size = Size(0, 0)
+        for cell in cells:
+            requested_size |= cell.requested_size
+        return requested_size
+
+    def allocateSize(self, allocated_size, requested_size, cells):
         """Windows subtract their position from the child's position.
 
         As a result, the position of the child is always (0, 0).
 
         """
-        cell_size = SizeAllocation((0, 0), allocated_size.size)
-        cell.allocateSize(cell_size)
+        for cell in cells:
+            cell_size = SizeAllocation((0, 0), allocated_size.size)
+            cell.allocateSize(cell_size)

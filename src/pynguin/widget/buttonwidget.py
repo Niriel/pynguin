@@ -4,17 +4,17 @@ Created on Dec 2, 2010
 @author: Niriel
 """
 
-from pynguin.layout import BinLayout
+from pynguin.layout import Layout
 from pynguin.sprite import ButtonSprite
-from binwidget import BinWidget
+from containerwidget import ContainerWidget
 
 __all__ = ['ButtonWidget']
 
-class ButtonWidget(BinWidget):
+class ButtonWidget(ContainerWidget):
     """Widget for a button that can be pressed."""
     def __init__(self):
-        BinWidget.__init__(self)
-        self._layout = BinLayout()
+        ContainerWidget.__init__(self)
+        self._layout = Layout()
         self._sprite = ButtonSprite()
 
     def setMode(self, mode):
