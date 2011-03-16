@@ -60,7 +60,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
     """A GUI element that can contain other GUI elements.
 
     """
-    def __init__(self):
+    def __init__(self, max_children=-1):
         """Initialize a new Container object.
 
         Upon creation, the container initializes a list of cells::
@@ -74,6 +74,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         parentable.Parentable.__init__(self)
         self._layout = None
         self.cells = []
+        self.max_children = max_children
 
     def __iter__(self):
         """Create an iterator over the children.
@@ -484,6 +485,10 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             AlreadyParentError: Child already has a parent and cannot be added to this container.
 
         """
+        if self.max_children > -1:
+            if len(self.cells) >= self.max_children:
+                msg = "Container capacity exceeded."
+                raise ContainerError(msg)
         if not hasattr(child, 'parent'):
             msg = "%r has no 'parent' attribute.  " \
                   "Make sure it inherits from Parentable." % child

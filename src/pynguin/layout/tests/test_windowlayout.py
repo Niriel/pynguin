@@ -26,7 +26,7 @@ class TestWindowLayout(unittest.TestCase):
         my_layout = windowlayout.WindowLayout()
         cell = Cell(MockWidget(10, 20), 'padded', 'padded')
         cell.requestSize(True)
-        requested_size = my_layout.requestSize(cell)
+        requested_size = my_layout.requestSize([cell])
         self.assertEquals(requested_size, Size(10, 20))
 
     def testAllocateSize(self):
@@ -34,9 +34,9 @@ class TestWindowLayout(unittest.TestCase):
         my_layout = windowlayout.WindowLayout()
         cell = Cell(MockWidget(10, 20), 'padded', 'padded')
         cell.requestSize(True)
-        requested_size = my_layout.requestSize(cell)
+        requested_size = my_layout.requestSize([cell])
         allocated_size = SizeAllocation((10, 20), (30, 40))
-        my_layout.allocateSize(allocated_size, requested_size, cell)
+        my_layout.allocateSize(allocated_size, requested_size, [cell])
         cell_size = cell.allocated_size
         self.assertEquals(cell_size, SizeAllocation((0, 0), (30, 40)))
 

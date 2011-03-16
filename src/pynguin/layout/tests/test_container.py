@@ -47,5 +47,18 @@ class TestContainer(unittest.TestCase):
         requested_size = my_container.requested_size
         self.assertEquals(requested_size, Size(60, 60))
 
+    def testMaxChildren(self):
+        """Container.max_children is checked when adding a child."""
+        widget1 = MockWidget(10, 20)
+        widget2 = MockWidget(30, 40)
+        my_container = container.Container()
+        my_container.max_children = 1
+        my_container.addChild(widget1, 'end', 'not', 'not')
+        self.assertRaises(container.ContainerError,
+                          my_container.addChild,
+                          widget2, 'end', 'not', 'not')
+        my_container.max_children = -1 # No limit.
+        my_container.addChild(widget2, 'end', 'not', 'not')
+
 if __name__ == "__main__":
     unittest.main()

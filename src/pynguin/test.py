@@ -25,7 +25,7 @@ def main():
     box = VBoxWidget(0, True)
     label_hello = LabelWidget(font, "Hello,")
     label_world = LabelWidget(font,  "world !")
-    screen.addChild(box, 'padded', 'padded')
+    screen.addChild(box, 'end', 'padded', 'padded')
     box.addChild(label_hello, 'end', 'padding', 'padding')
     box.addChild(label_world, 'end', 'padded', 'padded')
     screen.dispatchDisplayers()

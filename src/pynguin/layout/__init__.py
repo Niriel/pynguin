@@ -263,10 +263,8 @@ from parentable import *
 from padding import *
 from cell import *
 from container import *
-from bin import *
 
 from layout import *
-from binlayout import *
 from boardlayout import *
 from boxlayout import *
 from windowlayout import *

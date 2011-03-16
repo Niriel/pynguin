@@ -25,7 +25,7 @@ class TestScrollLayout(unittest.TestCase):
         my_scroll = scrolllayout.ScrollLayout()
         cell = Cell(MockWidget(10, 100), 'padded', 'padded')
         cell.requestSize(True)
-        requested_size = my_scroll.requestSize(cell)
+        requested_size = my_scroll.requestSize([cell])
         allocated_size = SizeAllocation((10, 20), (30, 40))
         my_scroll.allocateSize(allocated_size, requested_size, cell)
         cell_size = cell.allocated_size

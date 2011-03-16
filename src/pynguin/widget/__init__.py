@@ -3,7 +3,6 @@
 
 """
 from boxwidget import HBoxWidget, VBoxWidget
-from binwidget import BinWidget
 from buttonwidget import ButtonWidget
 from containerwidget import ContainerWidget
 from labelwidget import LabelWidget
