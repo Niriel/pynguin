@@ -12,3 +12,4 @@ from sizeablewidget import SizeableWidget
 from textboxwidget import TextBoxWidget
 from textwidget import TextWidget
 from windowwidget import WindowWidget
+from borderwidget import BorderWidget

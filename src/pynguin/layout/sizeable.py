@@ -7,6 +7,8 @@ Created on Nov 29, 2010
 
 from size import SizeAllocation
 
+__all__ = ['SizeableError', 'SizeAllocationError', 'ExpandError', 'Sizeable']
+
 class SizeableError(RuntimeError):
     """Base error raised by the sizeable module."""
 

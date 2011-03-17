@@ -44,13 +44,13 @@ class InconsistentParenthoodError(ContainerError):
     """
 
 
-class InvalidWhereContstructError(ContainerError):
+class InvalidWhereConstructError(ContainerError):
     """Error raised when the where-construct to insert a cell is insane.
 
-    >>> raise InvalidWhereContstructError('boom')
+    >>> raise InvalidWhereConstructError('boom')
     Traceback (most recent call last):
     ...
-    InvalidWhereContstructError: boom
+    InvalidWhereConstructError: boom
 
     """
 
@@ -297,7 +297,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             >>> print container.children == [child1, child3, child2]
             True
 
-        If the where construct is invalid, an InvalidWhereContstructError is
+        If the where construct is invalid, an InvalidWhereConstructError is
         raised::
 
             >>> container = Container()
@@ -305,11 +305,11 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             >>> container._insertChild(child1, 'wrong')
             Traceback (most recent call last):
             ...
-            InvalidWhereContstructError: Parameter where is invalid, please refer to the documentation of container._insertChild.
+            InvalidWhereConstructError: Parameter where is invalid, please refer to the documentation of container._insertChild.
             >>> container._insertChild(child1, ('wrong', 45))
             Traceback (most recent call last):
             ...
-            InvalidWhereContstructError: Parameter where is invalid, please refer to the documentation of container._insertChild.
+            InvalidWhereConstructError: Parameter where is invalid, please refer to the documentation of container._insertChild.
 
         If the integer given in the where=('index', integer) is out of bound,
         then IndexError is raised::
@@ -343,7 +343,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         if not isinstance(where, tuple):
             msg = "Parameter where is invalid, please refer to the " \
                   "documentation of container._insertChild."
-            raise InvalidWhereContstructError(msg)
+            raise InvalidWhereConstructError(msg)
 
         key, value = where
         if key == 'index':
@@ -355,7 +355,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         else:
             msg = "Parameter where is invalid, please refer to the " \
                   "documentation of container._insertChild."
-            raise InvalidWhereContstructError(msg)
+            raise InvalidWhereConstructError(msg)
 
     def addChild(self, child, where):
         """Add child to the container.
@@ -386,7 +386,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
         * IndexError: the given index is out of bound.
         * NotAChildError: the given reference child is not in the container.
-        * InvalidWhereContstructError: incorrect tuple or string.
+        * InvalidWhereConstructError: incorrect tuple or string.
 
         Please read the documentation of the method _insertChild for more details
         on the `where` parameter.

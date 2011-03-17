@@ -19,7 +19,7 @@ The present module defines
 """
 
 
-__all__ = ['Vector', 'Size', 'Pos', 'SizeAllocation']
+__all__ = ['Size', 'Pos', 'SizeAllocation']
 
 
 class Vector(object):

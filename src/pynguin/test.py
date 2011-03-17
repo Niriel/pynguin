@@ -25,13 +25,17 @@ def main():
     box = VBoxWidget(0, True)
     label_hello = LabelWidget(font, "Hello,")
     label_world = LabelWidget(font,  "world !")
-    screen.addChild(box, 'end')
-    box.addChild(label_hello, 'end')
-    box.addChild(label_world, 'end')
+    label_world.can_expand_height = False
+    screen.addChild(box)
+    border_hello = BorderWidget(42)
+    border_hello.addChild(label_hello)
+    border_world = BorderWidget((10, 20, 40, 80))
+    border_world.addChild(label_world)
+    box.addChild(border_hello)
+    box.addChild(border_world)
     screen.dispatchDisplayers()
     screen.negotiateSize(True)
     screen._sprite.update()
-    print label_hello.altitude
     running = True
     clock = pygame.time.Clock()
     while running:

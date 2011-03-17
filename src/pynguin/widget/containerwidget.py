@@ -48,21 +48,23 @@ class ContainerWidget(Widget, Container):
         for child in self:
             child.altitude = children_altitude
 
-    def addChild(self, child, where):
+    def addChild(self, child, where='end'):
         """Add child to the container.
 
         Parameters.
         ===========
 
         - child: the child to add.
-        - where: a description of the position within the list of children where
-          the cell for child must be inserted.
+        - where: a description of the position within the list of children
+          where the cell for child must be inserted.
         - expand_width: 'not', 'padding' or 'padded'.
         - expand_height: 'not', 'padding' or 'padded'.
         - padding: a Padding object or 1, 2 or 4 integers.
 
         Parameter `where`.
         ------------------
+
+        Optional.  Default value: 'end'.
 
         `where` can have several values, either string or
         tuple(string, object):

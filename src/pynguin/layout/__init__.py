@@ -257,14 +257,27 @@ Please refer to the documentation of the individual modules for a more detailed
 description of the classes.
 
 """
-from size import *
-from sizeable import *
-from parentable import *
-from padding import *
-from container import *
+from size import Size
+from size import Pos
+from size import SizeAllocation
+from sizeable import Sizeable
+from sizeable import SizeableError
+from sizeable import SizeAllocationError
+from sizeable import ExpandError
+from parentable import Parentable
+from parentable import ParentableError
+from parentable import NoParentError
+from parentable import AlreadyParentError
+from container import Container
+from container import ContainerError
+from container import NotAChildError
+from container import InconsistentParenthoodError
+from container import InvalidWhereConstructError
 
-from layout import *
-from boardlayout import *
-from boxlayout import *
-from windowlayout import *
-from scrolllayout import *
+from layout import Layout
+from boardlayout import BoardLayout
+from borderlayout import BorderLayout
+from boxlayout import HBoxLayout
+from boxlayout import VBoxLayout
+from windowlayout import WindowLayout
+from scrolllayout import ScrollLayout
