@@ -35,7 +35,7 @@ class Test(unittest.TestCase):
         self.assertEquals(my_layout.right, 42)
         self.assertEquals(my_layout.bottom, 42)
 
-    def testInitTuple1(self):
+    def testInitTupleOne(self):
         """BorderLayout.__init__ sets margins to the provided 1-tuple."""
         my_layout = borderlayout.BorderLayout((42,))
         self.assertEquals(my_layout.left, 42)
@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         self.assertEquals(my_layout.right, 42)
         self.assertEquals(my_layout.bottom, 42)
 
-    def testInitTuple2(self):
+    def testInitTupleTwo(self):
         """BorderLayout.__init__ sets margins to the provided 2-tuple."""
         my_layout = borderlayout.BorderLayout((1, 2))
         self.assertEquals(my_layout.left, 1)
@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
         self.assertEquals(my_layout.right, 1)
         self.assertEquals(my_layout.bottom, 2)
 
-    def testInitTuple4(self):
+    def testInitTupleThree(self):
         """BorderLayout.__init__ sets margins to the provided 4-tuple."""
         my_layout = borderlayout.BorderLayout((1, 2, 3, 4))
         self.assertEquals(my_layout.left, 1)

@@ -12,6 +12,7 @@ import tools
 __all__ = ['BorderLayout']
 
 class BorderLayout(Layout):
+    """Put a margin around a widget."""
     def __init__(self, margins=0):
         """margins can be an int or a tuple/list of 1, 2 or 4 int."""
         Layout.__init__(self)
@@ -22,6 +23,7 @@ class BorderLayout(Layout):
         self.parseMargins(margins)
 
     def parseMargins(self, margins):
+        """Set the left, top, right and bottom margins."""
         try:
             len_padding = len(margins)
         except TypeError:
@@ -50,6 +52,7 @@ class BorderLayout(Layout):
             raise ValueError("Invalid margins.")
             
     def requestSize(self, children):
+        """Return child size + margins size."""
         assert len(children) == 1
         child = children[0]
         requested_size = child.requested_size.copy()
@@ -58,6 +61,7 @@ class BorderLayout(Layout):
         return requested_size
 
     def allocateSize(self, allocated_size, requested_size, children):
+        """Share the space between the margins and the child."""
         assert len(children) == 1
         child = children[0]
 
