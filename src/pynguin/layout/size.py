@@ -21,6 +21,8 @@ The present module defines
 
 __all__ = ['Size', 'Pos', 'SizeAllocation']
 
+# pylint: disable-msg=C0103
+# Because I like c1 and c2 as variable names. 
 
 class Vector(object):
     """A two-dimensional vector of coordinates c1 and c2, with maths.
@@ -497,6 +499,8 @@ class Size(Vector):
         2
 
         """
+        # I MUST overload Vector's init because I want to use c1 and c2 from
+        # the current class, not Vector's.
         Vector.__init__(self, 0, 0)
         self.c1 = width
         self.c2 = height
@@ -588,11 +592,18 @@ class Size(Vector):
             raise ValueError("Size.height must be positive, not %i." % value)
         self._c2 = value
 
-    c1 = width = property(Vector._getC1, _setC1, None, "Secure access to the width (c1).")
-    c2 = height = property(Vector._getC2, _setC2, None, "Secure access to the height (c2).")
+    c1 = width = property(Vector._getC1, _setC1, None,
+                          "Secured access to the width (c1).")
+    c2 = height = property(Vector._getC2, _setC2, None,
+                           "Secured access to the height (c2).")
 
 
 class Pos(Vector):
+    """A position.
+    
+    Two properties: x and y.
+    
+    """
     x = Vector.c1
     y = Vector.c2
 
@@ -647,7 +658,9 @@ class SizeAllocation(Vector):
         and usually corresponds to the desired behavior.
 
         """
-        object.__init__(self)
+        Vector.__init__(self, None, None)
+        # pylint: disable-msg=W0142
+        # Because using *pos and *size here is not that dirty.
         self.pos = Pos(*pos) if isinstance(pos, tuple) else pos.copy()
         self.size = Size(*size) if isinstance(size, tuple) else size.copy()
 
@@ -776,8 +789,10 @@ class SizeAllocation(Vector):
 
     left = property(_getLeft, _setLeft, None, "Convenient access to pos.x.")
     top = property(_getTop, _setTop, None, "Convenient access to pos.y.")
-    width = property(_getWidth, _setWidth, None, "Convenient access to size.width.")
-    height = property(_getHeight, _setHeight, None, "Convenient access to size.height.")
+    width = property(_getWidth, _setWidth, None,
+                     "Convenient access to size.width.")
+    height = property(_getHeight, _setHeight, None,
+                      "Convenient access to size.height.")
 
 if __name__ == '__main__':
     help(__name__)
