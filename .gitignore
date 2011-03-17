@@ -11,6 +11,7 @@
 # Eclipse SDK files.
 .project
 .pydevproject
+.settings
 
 # Temporary files created by emacs or gedit.
 *.*~
