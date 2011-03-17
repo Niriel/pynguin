@@ -10,26 +10,26 @@ __all__ = ['Layout']
 class Layout(object):
     """Base class for layouts.
 
-    A layout organizes the position and size of several cells belonging to a
+    A layout organizes the position and size of several children belonging to a
     container.
 
     This class is abstract.
 
     """
-    def requestSize(self, cells):
+    def requestSize(self, children):
         """Does the actual computation of the requested size.
 
         Parameters.
         ===========
 
-        * `cells`: list of Cell objects.  Their size must have already been
-          requested.
+        * `children`: list of Sizeable objects.  Their size must have already
+          been requested.
 
         """
         raise NotImplementedError("Class is abstract.")
 
-    def allocateSize(self, allocated_size, requested_size, cells):
-        """Allocate the cells size to match allocated_size.
+    def allocateSize(self, allocated_size, requested_size, children):
+        """Allocate the children size to match allocated_size.
 
         Parameters.
         ===========
@@ -38,7 +38,7 @@ class Layout(object):
           position that the widget will have.
         * `requested_size`: Size object, defines the size that the widget
           requested.
-        * `cells`: list of Cell objects.
+        * `children`: list of Sizeable objects.
 
         The requested size is important for the size allocation because it is
         used for computing proportionality coefficients.

@@ -29,12 +29,12 @@ class ContainerWidget(Widget, Container):
         """Recursively set the displayers of the widget tree.
 
         ContainerWidget.dispatchDisplayers calls setDisplayer on itself and
-        dispatchDisplayers on its cells, if any.
+        dispatchDisplayers on its children, if any.
 
         """
         self.setDisplayer(displayer)
-        for cell in self.cells:
-            cell.padded.dispatchDisplayers(displayer)
+        for child in self.children:
+            child.dispatchDisplayers(displayer)
 
     def _setAltitude(self, value):
         """Set the altitude of the widget and its children.
@@ -48,14 +48,14 @@ class ContainerWidget(Widget, Container):
         for child in self:
             child.altitude = children_altitude
 
-    def addChild(self, child, where, expand_width, expand_height, *padding):
+    def addChild(self, child, where):
         """Add child to the container.
 
         Parameters.
         ===========
 
         - child: the child to add.
-        - where: a description of the position within the list of cells where
+        - where: a description of the position within the list of children where
           the cell for child must be inserted.
         - expand_width: 'not', 'padding' or 'padded'.
         - expand_height: 'not', 'padding' or 'padded'.
@@ -95,6 +95,5 @@ class ContainerWidget(Widget, Container):
         and then assigns an altitude to the child: that of the container + 1.
 
         """
-        Container.addChild(self, child, where, expand_width, expand_height,
-                           *padding)
+        Container.addChild(self, child, where)
         child.altitude = self.altitude + 1

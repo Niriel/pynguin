@@ -9,7 +9,6 @@ import unittest
 from pynguin.layout.size import Size
 from pynguin.layout.size import SizeAllocation
 from pynguin.layout import boardlayout
-from pynguin.layout.cell import Cell
 from mock import MockWidget
 
 class TestDocTest(unittest.TestCase):
@@ -26,30 +25,30 @@ class TestBoard(unittest.TestCase):
     """Test the BoardLayout layout."""
     def testRequestSize(self):
         """BoardLayout.requestSize returns its favorite size."""
-        cells = [Cell(MockWidget(20, 10), 'not', 'not'),
-                 Cell(MockWidget(40, 10), 'not', 'not'),
-                 Cell(MockWidget(30, 15), 'not', 'not')]
-        for cell in cells:
-            cell.requestSize(True)
+        children = [MockWidget(20, 10),
+                    MockWidget(40, 10),
+                    MockWidget(30, 15)]
+        for child in children:
+            child.requestSize(True)
         my_board = boardlayout.BoardLayout()
-        requested_size = my_board.requestSize(cells)
+        requested_size = my_board.requestSize(children)
         self.assertEquals(requested_size, my_board.preferred_size)
-        self.assertEquals(cells[0].requested_size, Size(20, 10))
-        self.assertEquals(cells[1].requested_size, Size(40, 10))
-        self.assertEquals(cells[2].requested_size, Size(30, 15))
+        self.assertEquals(children[0].requested_size, Size(20, 10))
+        self.assertEquals(children[1].requested_size, Size(40, 10))
+        self.assertEquals(children[2].requested_size, Size(30, 15))
 
     def testAllocateSize(self):
-        """BoardLayout.allocateSize gives the cells the size they want."""
-        cells = [Cell(MockWidget(20, 10), 'not', 'not'),
-                 Cell(MockWidget(40, 10), 'not', 'not'),
-                 Cell(MockWidget(30, 15), 'not', 'not')]
-        for cell in cells:
+        """BoardLayout.allocateSize gives the children the size they want."""
+        children = [MockWidget(20, 10),
+                    MockWidget(40, 10),
+                    MockWidget(30, 15)]
+        for cell in children:
             cell.requestSize(True)
         my_board = boardlayout.BoardLayout()
-        requested_size = my_board.requestSize(cells)
+        requested_size = my_board.requestSize(children)
         allocated_size = SizeAllocation((1, 2), requested_size)
-        my_board.allocateSize(allocated_size, requested_size, cells)
-        cell_sizes = [cell.allocated_size for cell in cells]
+        my_board.allocateSize(allocated_size, requested_size, children)
+        cell_sizes = [cell.allocated_size for cell in children]
         self.assertEquals(cell_sizes[0], SizeAllocation((0, 0), (20, 10)))
         self.assertEquals(cell_sizes[1], SizeAllocation((0, 0), (40, 10)))
         self.assertEquals(cell_sizes[2], SizeAllocation((0, 0), (30, 15)))

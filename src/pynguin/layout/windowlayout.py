@@ -24,11 +24,11 @@ class WindowLayout(Layout):
 
     """
 
-    def requestSize(self, cells):
+    def requestSize(self, children):
         """Return the max."""
         requested_size = Size(0, 0)
-        for cell in cells:
-            requested_size |= cell.requested_size
+        for child in children:
+            requested_size |= child.requested_size
         return requested_size
 
     def allocateSize(self, allocated_size, requested_size, cells):
@@ -37,6 +37,6 @@ class WindowLayout(Layout):
         As a result, the position of the child is always (0, 0).
 
         """
-        for cell in cells:
+        for child in cells:
             cell_size = SizeAllocation((0, 0), allocated_size.size)
-            cell.allocateSize(cell_size)
+            child.allocateSize(cell_size)

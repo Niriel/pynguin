@@ -64,5 +64,5 @@ class ScreenWidget(WindowWidget):
         screen.dispatchDisplayers() once your tree is built.
 
         """
-        for cell in self.cells:
-            cell.padded.dispatchDisplayers(self)
+        for child in self.children:
+            child.dispatchDisplayers(self)

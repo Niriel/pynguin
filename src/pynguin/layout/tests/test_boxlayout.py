@@ -15,8 +15,8 @@ import unittest
 from pynguin.layout.size import Size
 from pynguin.layout.size import SizeAllocation
 from pynguin.layout.size import Pos
+from pynguin.layout.sizeable import ExpandError
 from pynguin.layout import boxlayout
-from pynguin.layout.cell import Cell
 from mock import MockWidget
 
 
@@ -65,22 +65,25 @@ class TestBox(unittest.TestCase):
 class TestHBoxLayout(unittest.TestCase):
     """Test the HBoxLayout."""
     def setUp(self):
-        """Prepare the cells for the test."""
+        """Prepare the children for the test."""
         self.widget1 = MockWidget(20, 10)
         self.widget2 = MockWidget(40, 10)
         self.widget3 = MockWidget(30, 15)
-        self.cell1 = Cell(self.widget1, 'padded', 'padded')
-        self.cell2 = Cell(self.widget2, 'padded', 'padding')
-        self.cell3 = Cell(self.widget3, 'padding', 'padding')
-        self.cells = [self.cell1, self.cell2, self.cell3]
-        for cell in self.cells:
-            cell.requestSize(True)
+        self.widget1.can_expand_width = True
+        self.widget1.can_expand_height = True
+        self.widget2.can_expand_width = False
+        self.widget2.can_expand_height = True
+        self.widget3.can_expand_width = True
+        self.widget3.can_expand_height = True
+        self.children = [self.widget1, self.widget2, self.widget3]
+        for child in self.children:
+            child.requestSize(True)
         self.homo_box = boxlayout.HBoxLayout(7, True)
         self.hetero_box = boxlayout.HBoxLayout(7, False)
 
     def testRequestSizeHeterogeneous(self):
         """HBoxLayout.requestSize heterogeneous works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         # Width: 20+40+30 = 90.
         #     Plus 2*7 of spacing = 104.
         # Height: the biggest is 15.
@@ -88,7 +91,7 @@ class TestHBoxLayout(unittest.TestCase):
 
     def testRequestSizeHomogeneous(self):
         """HBoxLayout.requestSize homogeneous works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         # Width: the biggest is 40.
         #     Time 3 widget = 120.
         #     Plus 2*7 of spacing = 134.
@@ -97,260 +100,279 @@ class TestHBoxLayout(unittest.TestCase):
 
     def testIdealHeterogeneous(self):
         """HBoxLayout.allocateSize ideal heterogeneous works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         self.hetero_box.allocateSize(allocated_size, requested_size,
-                                     self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(20, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(40, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(30, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(227, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(274, 100))
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(20, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(30, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(227, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(274, 100))
 
     def testIdealHomogeneous(self):
         """HBoxLayout.allocateSize ideal homogeneous works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(40, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(40, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(40, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(247, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(294, 100))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(40, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(40, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(247, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(294, 100))
 
     def testInflateButNoExpand(self):
         """HBoxLayout.allocateSize breaks if inflate non-expandable."""
-        self.cell1.expand_width = 'not'
-        self.cell2.expand_width = 'not'
-        self.cell3.expand_width = 'not'
+        self.widget1.can_expand_width = False
+        self.widget2.can_expand_width = False
+        self.widget3.can_expand_width = False
         #
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.width += 100
-        self.assertRaises(boxlayout.BoxError, self.homo_box.allocateSize,
-                          allocated_size, requested_size, self.cells)
+        self.assertRaises(ExpandError, self.homo_box.allocateSize,
+                          allocated_size, requested_size, self.children)
         #
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.width += 100
-        self.assertRaises(boxlayout.BoxError, self.hetero_box.allocateSize,
-                          allocated_size, requested_size, self.cells)
+        self.assertRaises(ExpandError, self.hetero_box.allocateSize,
+                          allocated_size, requested_size, self.children)
 
     def testInflateHeterogeneousPrimary(self):
         """HBoxLayout.allocateSize inflate heterogeneous primary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children) # (104, 15)
         allocated_size = SizeAllocation((200, 100), requested_size)
-        allocated_size.width += 50
-        # Algo must work with non-expandable cells:
-        self.cell1.expand_width = 'not'
+        allocated_size.width += 52 # ((200, 100), (156, 15))
         # Original size: 20 + 40 + 30   +   2 * 7 = 104
-        # I give 50 more to the expandable cells.
-        # Homothecy : (40+30+50) / (40+30) = 12/7
-        # 40*12/7 = 69
-        # 30*12/7 = 51
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(20, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(69, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(51, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(227, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(303, 100))
+        # I give 52 more to the expandable children.
+        # Homothecy : (20+30+52) / (20+30) = 102/50
+        # 20*102/50 = 40.8 = 41
+        # 30*102/50 = 61.2 = 61
+        # Good: 41 + 61 = 20 + 30 + 52 = 102
+        # 102 + 40 + 2 * 7 = 156
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(41, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(61, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(248, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(295, 100))
 
     def testInflateHomogeneousPrimary(self):
         """HBoxLayout.allocateSize inflate homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width += 30
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(50, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(50, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(50, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(257, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(314, 100))
+        # The homogeneous box will need all the widgets to be expandable in
+        # this case.
+        self.widget2.can_expand_width = True
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(50, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(50, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(50, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(257, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(314, 100))
 
     def testInflateHeterogeneousSecondary(self):
         """HBoxLayout.allocateSize inflate heterogeneous secondary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.height += 10
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(20, 25))
-        self.assertEqual(self.cell2.allocated_size.size, Size(40, 25))
-        self.assertEqual(self.cell3.allocated_size.size, Size(30, 25))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(227, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(274, 100))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(20, 25))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 25))
+        self.assertEqual(self.widget3.allocated_size.size, Size(30, 25))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(227, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(274, 100))
 
     def testInflateHomogeneousSecondary(self):
         """HBoxLayout.allocateSize inflate homogeneous secondary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.height += 10
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(40, 25))
-        self.assertEqual(self.cell2.allocated_size.size, Size(40, 25))
-        self.assertEqual(self.cell3.allocated_size.size, Size(40, 25))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(247, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(294, 100))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(40, 25))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 25))
+        self.assertEqual(self.widget3.allocated_size.size, Size(40, 25))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(247, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(294, 100))
 
     def testShrinkABitHeterogeneourPrimary(self):
         """HBoxLayout.allocateSize shrink a bit heterogeneous primary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width -= 30
-        # Requested cells: 20 + 40 + 30 = 90
+        # Requested children: 20 + 40 + 30 = 90
         # I remove 30 to the requested total.
-        # Allocated for the cells: 60.
+        # Allocated for the children: 60.
         # Zoom factor: 60 / 90.
         # 20 * 60 / 90 = 13
         # 40 * 60 / 90 = 27
         # 30 * 60 / 90 = 20
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(13, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(27, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(20, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(220, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(254, 100))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(13, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(27, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(20, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(220, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(254, 100))
 
     def testShrinkABitHomogeneousPrimary(self):
         """HBoxLayout.allocateSize shrink a bit homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width -= 30
-        # Requested cells: 20, 40, 30, bigger = 40.
+        # Requested children: 20, 40, 30, bigger = 40.
         # Requested total: 40 + 40 + 40 = 120.
         # I remove 30 to the requested total.
         # Allocated total = 90.
         # So each cell is going to get 90 / 3 = 30.
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(30, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(30, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(30, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(237, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(274, 100))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(30, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(30, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(30, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(237, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(274, 100))
 
     def testShrinkALotHeterogeneousPrimary(self):
         """HBoxLayout.allocateSize shrink a lot heterogeneous primary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width = 10
-        # 10 is not even enough to hold the spacing.  The cells should have a
-        # width of 0. Now we have to shrink the spacing.  Its length is 7.
+        # 10 is not even enough to hold the spacing.  The children should have
+        # a width of 0. Now we have to shrink the spacing.  Its length is 7.
         # There are two spacings: 7, 7 for a total of 14.  We apply a homothecy
-        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get
-        # 5 and 10 for coords out of the homothecy, and therefore 5 and 5
-        # for the lengths of the spacing.  We don't care about the lengths but
-        # we are interested in the coords since they give us the positions of
-        # our cells.  Just add a 0 in front of the list:  0, 5, 10.
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(205, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(210, 100))
+        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get 5 and
+        # 10 for coords out of the homothecy, and therefore 5 and 5 for the
+        # lengths of the spacing.  We don't care about the lengths but we are
+        # interested in the coords since they give us the positions of our
+        # children.  Just add a 0 in front of the list:  0, 5, 10.
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(205, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(210, 100))
 
     def testShrinkALotHomogeneousPrimary(self):
         """HBoxLayout.allocateSize shrink a lot homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width = 10
-        # 10 is not even enough to hold the spacing.  The cells should have a
-        # width of 0. Now we have to shrink the spacing.  Its length is 7.
+        # 10 is not even enough to hold the spacing.  The children should have
+        # a width of 0. Now we have to shrink the spacing.  Its length is 7.
         # There are two spacings: 7, 7 for a total of 14.  We apply a homothecy
-        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get
-        # 5 and 10 for coords out of the homothecy, and therefore 5 and 5
-        # for the lengths of the spacing.  We don't care about the lengths but
-        # we are interested in the coords since they give us the positions of
-        # our cells.  Just add a 0 in front of the list:  0, 5, 10.
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(205, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(210, 100))
+        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get 5 and
+        # 10 for coords out of the homothecy, and therefore 5 and 5 for the
+        # lengths of the spacing.  We don't care about the lengths but we are
+        # interested in the coords since they give us the positions of our
+        # children.  Just add a 0 in front of the list:  0, 5, 10.
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(205, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(210, 100))
 
     def testShrinkTotallyHeterogeneousPrimary(self):
         """HBoxLayout.allocateSize shrink totally heterogeneous primary works.
 
         """
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width = 0
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(200, 100))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(200, 100))
 
     def testShrinkTotallyHomogeneousPrimary(self):
         """HBoxLayout.allocateSize shrink totally homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.width = 0
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell2.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell3.allocated_size.size, Size(0, 15))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(200, 100))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget2.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget3.allocated_size.size, Size(0, 15))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(200, 100))
 
     def testShrinkHeterogeneousSecondary(self):
         """HBoxLayout.allocateSize shrink heterogeneous secondary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.height = 5
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(20, 5))
-        self.assertEqual(self.cell2.allocated_size.size, Size(40, 5))
-        self.assertEqual(self.cell3.allocated_size.size, Size(30, 5))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(227, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(274, 100))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(20, 5))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 5))
+        self.assertEqual(self.widget3.allocated_size.size, Size(30, 5))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(227, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(274, 100))
 
     def testShrinkHomogeneousSecondary(self):
-        """HBoxLayout.allocateSize shrink homnogeneous secondary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        """HBoxLayout.allocateSize shrink homogeneous secondary works."""
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.height = 5
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(40, 5))
-        self.assertEqual(self.cell2.allocated_size.size, Size(40, 5))
-        self.assertEqual(self.cell3.allocated_size.size, Size(40, 5))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(200, 100))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(247, 100))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(294, 100))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(40, 5))
+        self.assertEqual(self.widget2.allocated_size.size, Size(40, 5))
+        self.assertEqual(self.widget3.allocated_size.size, Size(40, 5))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(200, 100))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(247, 100))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(294, 100))
 
 
 class TestVBoxLayout(unittest.TestCase):
     """Test the VBoxLayout."""
     def setUp(self):
-        """Prepare the cells for the test."""
+        """Prepare the children for the test."""
         self.widget1 = MockWidget(10, 20)
         self.widget2 = MockWidget(10, 40)
         self.widget3 = MockWidget(15, 30)
-        self.cell1 = Cell(self.widget1, 'padded', 'padded')
-        self.cell2 = Cell(self.widget2, 'padding', 'padded')
-        self.cell3 = Cell(self.widget3, 'padding', 'padding')
-        self.cells = [self.cell1, self.cell2, self.cell3]
-        for cell in self.cells:
+        self.widget1.can_expand_width = True
+        self.widget1.can_expand_height = True
+        self.widget2.can_expand_width = True
+        self.widget2.can_expand_height = False
+        self.widget3.can_expand_width = True
+        self.widget3.can_expand_height = True
+        self.children = [self.widget1, self.widget2, self.widget3]
+        for cell in self.children:
             cell.requestSize(True)
         self.homo_box = boxlayout.VBoxLayout(7, True)
         self.hetero_box = boxlayout.VBoxLayout(7, False)
 
     def testRequestSizeHeterogeneous(self):
         """VBoxLayout.requestSize heterogeneous works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         # Height: 20+40+30 = 90.
         #     Plus 2*7 of spacing = 104.
         # Width: the biggest is 15.
@@ -358,7 +380,7 @@ class TestVBoxLayout(unittest.TestCase):
 
     def testRequestSizeHomogeneous(self):
         """VBoxLayout.requestSize homogeneous works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         # Height: the biggest is 40.
         #     Time 3 widget = 120.
         #     Plus 2*7 of spacing = 134.
@@ -367,240 +389,253 @@ class TestVBoxLayout(unittest.TestCase):
 
     def testIdealHeterogeneous(self):
         """VBoxLayout.allocateSize ideal heterogeneous works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         self.hetero_box.allocateSize(allocated_size, requested_size,
-                                     self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 20))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 40))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 30))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 227))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 274))
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 20))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 30))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 227))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 274))
 
     def testIdealHomogeneous(self):
         """VBoxLayout.allocateSize ideal homogeneous works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 40))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 40))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 40))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 247))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 294))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 40))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 40))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 247))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 294))
 
     def testInflateButNoExpand(self):
         """VBoxLayout.allocateSize breaks if inflate non-expandable."""
-        self.cell1.expand_height = 'not'
-        self.cell2.expand_height = 'not'
-        self.cell3.expand_height = 'not'
+        self.widget1.can_expand_height = False
+        self.widget2.can_expand_height = False
+        self.widget3.can_expand_height = False
         #
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height += 100
-        self.assertRaises(boxlayout.BoxError, self.homo_box.allocateSize,
-                          allocated_size, requested_size, self.cells)
+        self.assertRaises(ExpandError, self.homo_box.allocateSize,
+                          allocated_size, requested_size, self.children)
         #
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((200, 100), requested_size)
         allocated_size.height += 100
-        self.assertRaises(boxlayout.BoxError, self.hetero_box.allocateSize,
-                          allocated_size, requested_size, self.cells)
+        self.assertRaises(ExpandError, self.hetero_box.allocateSize,
+                          allocated_size, requested_size, self.children)
 
     def testInflateHeterogeneousPrimary(self):
         """VBoxLayout.allocateSize inflate heterogeneous primary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
-        allocated_size.height += 50
-        # Algo must work with non-expandable cells:
-        self.cell1.expand_height = 'not'
+        allocated_size.height += 52
         # Original size: 20 + 40 + 30   +   2 * 7 = 104
-        # I give 50 more to the expandable cells.
-        # Homothecy : (40+30+50) / (40+30) = 12/7
-        # 40*12/7 = 69
-        # 30*12/7 = 51
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 20))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 69))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 51))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 227))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 303))
+        # I give 52 more to the expandable children.
+        # Homothecy : (20 + 30 + 52) / (20 + 30) = 102 / 50
+        # 20 * 102 / 50 = 40.8 = 41
+        # 30 * 102 / 50 = 61.2 = 61
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 41))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 61))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 248))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 295))
 
     def testInflateHomogeneousPrimary(self):
         """VBoxLayout.allocateSize inflate homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height += 30
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 50))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 50))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 50))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 257))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 314))
+        # The homogeneous box will need all the widgets to be expandable in
+        # this case.
+        self.widget2.can_expand_height = True
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 50))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 50))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 50))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 257))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 314))
 
     def testInflateHeterogeneousSecondary(self):
         """VBoxLayout.allocateSize inflate heterogeneous secondary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.width += 10
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(25, 20))
-        self.assertEqual(self.cell2.allocated_size.size, Size(25, 40))
-        self.assertEqual(self.cell3.allocated_size.size, Size(25, 30))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 227))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 274))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(25, 20))
+        self.assertEqual(self.widget2.allocated_size.size, Size(25, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(25, 30))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 227))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 274))
 
     def testInflateHomogeneousSecondary(self):
         """VBoxLayout.allocateSize inflate homogeneous secondary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.width += 10
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(25, 40))
-        self.assertEqual(self.cell2.allocated_size.size, Size(25, 40))
-        self.assertEqual(self.cell3.allocated_size.size, Size(25, 40))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 247))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 294))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(25, 40))
+        self.assertEqual(self.widget2.allocated_size.size, Size(25, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(25, 40))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 247))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 294))
 
     def testShrinkABitHeterogeneourPrimary(self):
         """VBoxLayout.allocateSize shrink a bit heterogeneous primary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height -= 30
-        # Requested cells: 20 + 40 + 30 = 90
+        # Requested children: 20 + 40 + 30 = 90
         # I remove 30 to the requested total.
-        # Allocated for the cells: 60.
+        # Allocated for the children: 60.
         # Zoom factor: 60 / 90.
         # 20 * 60 / 90 = 13
         # 40 * 60 / 90 = 27
         # 30 * 60 / 90 = 20
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 13))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 27))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 20))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 220))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 254))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 13))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 27))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 20))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 220))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 254))
 
     def testShrinkABitHomogeneousPrimary(self):
         """VBoxLayout.allocateSize shrink a bit homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height -= 30
-        # Requested cells: 20, 40, 30, bigger = 40.
+        # Requested children: 20, 40, 30, bigger = 40.
         # Requested total: 40 + 40 + 40 = 120.
         # I remove 30 to the requested total.
         # Allocated total = 90.
         # So each cell is going to get 90 / 3 = 30.
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 30))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 30))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 30))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 237))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 274))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 30))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 30))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 30))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 237))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 274))
 
     def testShrinkALotHeterogeneousPrimary(self):
         """VBoxLayout.allocateSize shrink a lot heterogeneous primary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height = 10
-        # 10 is not even enough to hold the spacing.  The cells should have a
-        # width of 0. Now we have to shrink the spacing.  Its length is 7.
+        # 10 is not even enough to hold the spacing.  The children should have
+        # a width of 0. Now we have to shrink the spacing.  Its length is 7.
         # There are two spacings: 7, 7 for a total of 14.  We apply a homothecy
-        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get
-        # 5 and 10 for coords out of the homothecy, and therefore 5 and 5
-        # for the lengths of the spacing.  We don't care about the lengths but
-        # we are interested in the coords since they give us the positions of
-        # our cells.  Just add a 0 in front of the list:  0, 5, 10.
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 205))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 210))
+        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get 5 and
+        # 10 for coords out of the homothecy, and therefore 5 and 5 for the
+        # lengths of the spacing.  We don't care about the lengths but we are
+        # interested in the coords since they give us the positions of our
+        # children.  Just add a 0 in front of the list:  0, 5, 10.
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 205))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 210))
 
     def testShrinkALotHomogeneousPrimary(self):
         """VBoxLayout.allocateSize shrink a lot homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height = 10
-        # 10 is not even enough to hold the spacing.  The cells should have a
-        # width of 0. Now we have to shrink the spacing.  Its length is 7.
+        # 10 is not even enough to hold the spacing.  The children should have
+        # a width of 0. Now we have to shrink the spacing.  Its length is 7.
         # There are two spacings: 7, 7 for a total of 14.  We apply a homothecy
-        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get
-        # 5 and 10 for coords out of the homothecy, and therefore 5 and 5
-        # for the lengths of the spacing.  We don't care about the lengths but
-        # we are interested in the coords since they give us the positions of
-        # our cells.  Just add a 0 in front of the list:  0, 5, 10.
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 205))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 210))
+        # to make it fit into 10. 7 * 10 / 14 = 5. 14*10/14=10. So we get 5 and
+        # 10 for coords out of the homothecy, and therefore 5 and 5 for the
+        # lengths of the spacing.  We don't care about the lengths but we are
+        # interested in the coords since they give us the positions of our
+        # children.  Just add a 0 in front of the list:  0, 5, 10.
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 205))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 210))
 
     def testShrinkTotallyHeterogeneousPrimary(self):
         """VBoxLayout.allocateSize shrink totally heterogeneous primary works.
 
         """
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height = 0
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 200))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 200))
 
     def testShrinkTotallyHomogeneousPrimary(self):
         """VBoxLayout.allocateSize shrink totally homogeneous primary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.height = 0
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell2.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell3.allocated_size.size, Size(15, 0))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 200))
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget2.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget3.allocated_size.size, Size(15, 0))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 200))
 
     def testShrinkHeterogeneousSecondary(self):
         """VBoxLayout.allocateSize shrink heterogeneous secondary works."""
-        requested_size = self.hetero_box.requestSize(self.cells)
+        requested_size = self.hetero_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.width = 5
-        self.hetero_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(5, 20))
-        self.assertEqual(self.cell2.allocated_size.size, Size(5, 40))
-        self.assertEqual(self.cell3.allocated_size.size, Size(5, 30))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 227))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 274))
+        self.hetero_box.allocateSize(allocated_size, requested_size,
+                                     self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(5, 20))
+        self.assertEqual(self.widget2.allocated_size.size, Size(5, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(5, 30))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 227))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 274))
 
     def testShrinkHomogeneousSecondary(self):
-        """VBoxLayout.allocateSize shrink homnogeneous secondary works."""
-        requested_size = self.homo_box.requestSize(self.cells)
+        """VBoxLayout.allocateSize shrink homogeneous secondary works."""
+        requested_size = self.homo_box.requestSize(self.children)
         allocated_size = SizeAllocation((100, 200), requested_size)
         allocated_size.width = 5
-        self.homo_box.allocateSize(allocated_size, requested_size, self.cells)
-        self.assertEqual(self.cell1.allocated_size.size, Size(5, 40))
-        self.assertEqual(self.cell2.allocated_size.size, Size(5, 40))
-        self.assertEqual(self.cell3.allocated_size.size, Size(5, 40))
-        self.assertEqual(self.cell1.allocated_size.pos, Pos(100, 200))
-        self.assertEqual(self.cell2.allocated_size.pos, Pos(100, 247))
-        self.assertEqual(self.cell3.allocated_size.pos, Pos(100, 294))
-
+        self.homo_box.allocateSize(allocated_size, requested_size,
+                                   self.children)
+        self.assertEqual(self.widget1.allocated_size.size, Size(5, 40))
+        self.assertEqual(self.widget2.allocated_size.size, Size(5, 40))
+        self.assertEqual(self.widget3.allocated_size.size, Size(5, 40))
+        self.assertEqual(self.widget1.allocated_size.pos, Pos(100, 200))
+        self.assertEqual(self.widget2.allocated_size.pos, Pos(100, 247))
+        self.assertEqual(self.widget3.allocated_size.pos, Pos(100, 294))
 
 
 if __name__ == "__main__":

@@ -39,5 +39,36 @@ class TestSizeable(unittest.TestCase):
         self.assertEquals(widget.allocated_size.size, widget.requested_size)
         self.assertEquals(widget.allocated_size.pos, size.Pos(100, 200))
 
+    def testExpand(self):
+        """Sizeable.allocateSize checks the expandability."""
+        big_width = size.SizeAllocation((0, 0), (100, 20))
+        big_height = size.SizeAllocation((0, 0), (10, 200))
+        widget = MockWidget(10, 20)
+        widget.requestSize(True)
+
+        widget.can_expand_width = False
+        widget.can_expand_height = False
+        self.assertRaises(sizeable.ExpandError,
+                          widget.allocateSize, big_width)
+        self.assertRaises(sizeable.ExpandError,
+                          widget.allocateSize, big_height)
+
+        widget.can_expand_width = True
+        widget.can_expand_height = False
+        widget.allocateSize(big_width)
+        self.assertRaises(sizeable.ExpandError,
+                          widget.allocateSize, big_height)
+
+        widget.can_expand_width = False
+        widget.can_expand_height = True
+        self.assertRaises(sizeable.ExpandError,
+                          widget.allocateSize, big_width)
+        widget.allocateSize(big_height)
+
+        widget.can_expand_width = True
+        widget.can_expand_height = True
+        widget.allocateSize(big_width)
+        widget.allocateSize(big_height)
+
 #if __name__ == "__main__":
 #    unittest.main()

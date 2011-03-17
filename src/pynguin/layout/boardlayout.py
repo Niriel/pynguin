@@ -25,7 +25,7 @@ class BoardLayout(Layout):
         Layout.__init__(self)
         self.preferred_size = Size(*BoardLayout.PREFERRED_SIZE)
 
-    def requestSize(self, cells):
+    def requestSize(self, children):
         """Compute the requested size of a board: an arbitrary size.
 
         There is no reason for the board to have a size rather than another so
@@ -34,16 +34,17 @@ class BoardLayout(Layout):
         """
         return self.preferred_size.copy()
 
-    def allocateSize(self, allocated_size, requested_size, cells):
+    def allocateSize(self, allocated_size, requested_size, children):
         """Allocate the size of the board and its children.
 
         The children get whatever they asked for.
 
         """
-        for cell in cells:
-            if cell.allocated_size:
-                cell_size = cell.allocated_size
-                cell_size.size = cell.requested_size.copy()
+        for child in children:
+            if child.allocated_size:
+                # Keep the position.
+                child_size = child.allocated_size
+                child_size.size = child.requested_size.copy()
             else:
-                cell_size = SizeAllocation((0, 0), cell.requested_size)
-            cell.allocateSize(cell_size)
+                child_size = SizeAllocation((0, 0), child.requested_size)
+            child.allocateSize(child_size)

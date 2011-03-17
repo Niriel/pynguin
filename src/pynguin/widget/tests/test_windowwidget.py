@@ -28,7 +28,7 @@ class TestWindowWidget(unittest.TestCase):
         """WindowWidget.dispatchDisplayers transmits self to child."""
         widget = SizeableWidget()
         my_window = windowwidget.WindowWidget()
-        my_window.addChild(widget, 'end', 'not', 'not')
+        my_window.addChild(widget, 'end')
         displayer = MockDisplayer()
         my_window.dispatchDisplayers(displayer)
         self.assertTrue(my_window.getDisplayer() is displayer)

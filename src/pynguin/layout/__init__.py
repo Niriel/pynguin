@@ -261,7 +261,6 @@ from size import *
 from sizeable import *
 from parentable import *
 from padding import *
-from cell import *
 from container import *
 
 from layout import *

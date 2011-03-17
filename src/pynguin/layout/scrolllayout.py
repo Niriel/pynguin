@@ -12,7 +12,7 @@ __all__ = ['ScrollLayout']
 
 class ScrollLayout(WindowLayout):
     """A Scroll Layout allows its content to be bigger than itself."""
-    def allocateSize(self, allocated_size, requested_size, cell):
+    def allocateSize(self, allocated_size, requested_size, children):
         """The child of a scroll cannot be smaller than its requested size.
 
         Like any Sizeable object, the ScrollLayout object does obey to
@@ -25,9 +25,10 @@ class ScrollLayout(WindowLayout):
         allocated size, provide the user with a mean of scrolling to see all
         the content.
 
-        In short, the content of a ScrollLayout is always at least as big as the
-        scroll itself.
+        In short, the content of a ScrollLayout is always at least as big as
+        the scroll itself.
 
         """
         max_size = allocated_size.size | requested_size
-        cell.allocateSize(SizeAllocation((0, 0), max_size))
+        for child in children:
+            child.allocateSize(SizeAllocation((0, 0), max_size))

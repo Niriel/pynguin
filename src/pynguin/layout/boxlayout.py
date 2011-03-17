@@ -7,16 +7,12 @@ Created on Nov 9, 2010
 
 
 from size import Size
-from size import SizeAllocation
+from sizeable import SizeAllocation
+from sizeable import ExpandError
 from layout import Layout
 
 
-__all__ = ['HBoxLayout', 'VBoxLayout', 'BoxError']
-
-
-class BoxError(RuntimeError):
-    """Base error for the box module."""
-    pass
+__all__ = ['HBoxLayout', 'VBoxLayout']
 
 
 def Homothecy(ori_lengths, dest_length):
@@ -79,42 +75,43 @@ def Homothecy(ori_lengths, dest_length):
     return dest_positions[:-1], dest_lengths
 
 
-def GetExpandableIds(cells, length_name):
-    """Return a list of indexes of the cells that can expand in given dir.
+def GetExpandableIds(children, length_name):
+    """Return a list of indexes of the children that can expand in given dir.
 
     Parameters.
     -----------
 
-    * cells: a list of cells.
+    * children: a list of children.
     * length_name: a string "width" or "height".
 
     Return.
     -------
 
-    A list of integers.  Each integer is an index for a cell in cells that can
-    expand in the direction given by length_name.
+    A list of integers.  Each integer is an index for a child in children that
+    can expand in the direction given by length_name.
 
     """
+    # I could write a list comprehension here.  Would it make the code clearer?
     result = []
-    for cell_id, cell in enumerate(cells):
-        if cell.isExpandable(length_name):
-            result.append(cell_id)
+    for child_id, child in enumerate(children):
+        if child.canExpand(length_name):
+            result.append(child_id)
     return result
 
 
 class BoxLayout(Layout):
-    """A BoxLayout organizes widgets in a row or a column.
+    """A BoxLayout organizes children in a row or a column.
 
     BoxLayout is an abstract class.  Use HBoxLayout and VBoxLayout.
 
     BoxLayout objects have a spacing attribute.  This positive integer commands
-    the space that the BoxLayout requests and allocates BETWEEN the cells.  Do
-    not mistake the spacing and the padding.
+    the space that the BoxLayout requests and allocates BETWEEN the children.
 
     A BoxLayout can be homogeneous or not.  A homogeneous box allocates the
-    same space for all the cells.  A non-homogeneous (heterogeneous) box does
-    not do that.  Define whether or not your BoxLayout is homogeneous by
-    setting the appropriate parameter to True or False in the constructor.
+    same space for all the children.  A non-homogeneous (heterogeneous) box
+    allows the children to have different lengths (width or height).  Define
+    whether or not your BoxLayout is homogeneous by setting the appropriate
+    parameter to True or False in the constructor.
 
     """
 
@@ -127,20 +124,18 @@ class BoxLayout(Layout):
     def __init__(self, spacing, is_homogeneous):
         """Initialize a new BoxLayout object.
 
-        BoxLayout is abstract.
-
         Parameters.
         -----------
 
         * spacing: positive integer.
 
-          The space that the BoxLayout allocates BETWEEN the cells, not
-          around them.  Do not confuse with the padding of the cells.
+          The space that the BoxLayout allocates BETWEEN the children, not
+          around them.
 
         * is_homogeneous: boolean.
 
-          True for a homogeneous BoxLayout (all the cells get the same size),
-          False for a heterogeneous BoxLayout.
+          True for a homogeneous BoxLayout (all the children get the same
+          size), False for a heterogeneous BoxLayout.
 
         >>> box = BoxLayout(8, True)
         >>> print box.spacing
@@ -156,14 +151,14 @@ class BoxLayout(Layout):
         self.spacing = spacing
         self.is_homogeneous = is_homogeneous
 
-    def _requestSizeHomogeneous(self, cells):
+    def _requestSizeHomogeneous(self, children):
         """Compute the size needed by a homogeneous BoxLayout.
 
-        In a homogeneous box, the size allocated to the cells is the same
+        In a homogeneous box, the size allocated to the children is the same
         for all.
 
-        The algorithm looks at all the cells and finds the size of the
-        biggest one.  This size is used for all the cells.
+        The algorithm looks at all the children and finds the size of the
+        biggest one.  This size is used for all the children.
 
         This method is generic in the sense that it doesn't know whether the
         BoxLayout is horizontal (HBoxLayout) or vertical (VBoxLayout).  See the
@@ -184,17 +179,17 @@ class BoxLayout(Layout):
         secondary_length_name = self.SECONDARY_LENGTH
         max_size = Size(0, 0)
         try:
-            for cell in cells:
-                max_size |= cell.requested_size
+            for child in children:
+                max_size |= child.requested_size
         except AttributeError as ex:
             # I want to modify the text that's in the first arg.  But strings
             # as well as tuples are immutable.  So I just make a list for
             # a little while.
             args = list(ex.args)
-            args[0] += ", did you forget to request the size of the padded?"
+            args[0] += ", did you forget to request the size of the child?"
             ex.args = tuple(args)
             raise
-        children_nb = len(cells)
+        children_nb = len(children)
         primary_length = children_nb * getattr(max_size, primary_length_name)
         secondary_length = getattr(max_size, secondary_length_name)
 
@@ -205,21 +200,22 @@ class BoxLayout(Layout):
         setattr(result, secondary_length_name, secondary_length)
         return result
 
-    def _requestSizeHeterogeneous(self, cells):
+    def _requestSizeHeterogeneous(self, children):
         """Compute the size needed by a heterogeneous BoxLayout.
 
         In a heterogeneous box, the size requested is just enough to hold
-        the widgets with their requested size.
+        the children with their requested size.
 
-        The algorithm looks through all the widgets, summing their width or
+        The algorithm looks through all the children, summing their width or
         height (depends on the direction of the box), and taking the max of
         their height or width in the other direction.
 
         This method is generic in the sense that it doesn't know whether the
-        BoxLayout is horizontal (HBoxLayout) or vertical (VBoxLayout).  See the classes HBoxLayout and
-        VBoxLayout.  The only difference between those two is that in one case, the
-        primary dimension will be the width and the secondary one will be the
-        height, and in the other case it will be reversed.
+        BoxLayout is horizontal (HBoxLayout) or vertical (VBoxLayout).  See the
+        classes HBoxLayout and VBoxLayout.  The only difference between those
+        two is that in one case, the primary dimension will be the width and
+        the secondary one will be the height, and in the other case it will be
+        reversed.
 
         So for a horizontal box, have the following attribute values:
             PRIMARY_LENGTH = 'width'
@@ -236,14 +232,14 @@ class BoxLayout(Layout):
         primary_length_name = self.PRIMARY_LENGTH
         secondary_length_name = self.SECONDARY_LENGTH
         primary_length = secondary_length = 0
-        for cell in cells:
-            cell_size = cell.requested_size
-            primary_length += getattr(cell_size, primary_length_name)
-            cell_secondary_length = getattr(cell_size, secondary_length_name)
+        for child in children:
+            child_size = child.requested_size
+            primary_length += getattr(child_size, primary_length_name)
+            cell_secondary_length = getattr(child_size, secondary_length_name)
             if cell_secondary_length > secondary_length:
                 secondary_length = cell_secondary_length
 
-        children_nb = len(cells)
+        children_nb = len(children)
         primary_length += (children_nb - 1) * self.spacing
 
         result = Size(0, 0)
@@ -251,33 +247,35 @@ class BoxLayout(Layout):
         setattr(result, secondary_length_name, secondary_length)
         return result
 
-    def requestSize(self, cells):
+    def requestSize(self, children):
         """Compute the requested size of the BoxLayout."""
-        if not cells:
+        if not children:
             return Size(0, 0)
         if self.is_homogeneous:
-            return self._requestSizeHomogeneous(cells)
+            return self._requestSizeHomogeneous(children)
         else:
-            return self._requestSizeHeterogeneous(cells)
+            return self._requestSizeHeterogeneous(children)
 
-    def _allocatedSizeShrink(self, allocated_size, cells):
+    def _allocatedSizeShrink(self, allocated_size, children):
         """Performs the size allocation."""
-        # What is the length we can give to the cells ? It's the total
+        # What is the length we can give to the children ? It's the total
         # allocated length minus the spacing.
         alloc_primary_len = getattr(allocated_size, self.PRIMARY_LENGTH)
-        total_cell_length = alloc_primary_len - self.spacing * (len(cells) - 1)
+        total_cell_length = (alloc_primary_len -
+                             self.spacing * (len(children) - 1))
 
         if total_cell_length > 0:
-            # Apply the Homothecy on the cells. For the heterogeneous case, the
-            # original lengths are the requested lengths.  For the homogeneous
-            # case, the original lengths are all equals to the biggest
-            # requested length. The destination length is the length calculated
-            # above. We obtain the position and length of every widget.
-            primary_lengths = [getattr(cell.requested_size,
+            # Apply the homothecy on the children. For the heterogeneous case,
+            # the original lengths are the requested lengths.  For the
+            # homogeneous case, the original lengths are all equals to the
+            # biggest requested length. The destination length is the length
+            # calculated above. We obtain the position and length of every
+            # widget.
+            primary_lengths = [getattr(child.requested_size,
                                        self.PRIMARY_LENGTH)
-                               for cell in cells]
+                               for child in children]
             if self.is_homogeneous:
-                primary_lengths = [max(primary_lengths)] * len(cells)
+                primary_lengths = [max(primary_lengths)] * len(children)
             primary_coords, primary_lengths = Homothecy(primary_lengths,
                                                         total_cell_length)
             # The position needs to take the spacing into account.  Plus the
@@ -293,46 +291,46 @@ class BoxLayout(Layout):
             # homothecy on the spacing itself in order to shrink it properly.
             # The coordinates resulting from the homothecy will give us the
             # coordinates of our cells.
-            primary_lengths = [self.spacing] * (len(cells) - 1)
+            primary_lengths = [self.spacing] * (len(children) - 1)
             primary_coords, primary_lengths = Homothecy(primary_lengths,
                                                         alloc_primary_len)
-            # The last cell starts after the last spacing.
+            # The last child starts after the last spacing.
             primary_coords += [primary_coords[-1] + primary_lengths[-1]]
             box_primary_coord = getattr(allocated_size, self.PRIMARY_COORD)
             for i in xrange(len(primary_coords)):
                 primary_coords[i] += box_primary_coord
-            # No room for cells at all.
-            primary_lengths = [0] * len(cells)
+            # No room for children at all.
+            primary_lengths = [0] * len(children)
 
         secondary_coord = getattr(allocated_size, self.SECONDARY_COORD)
         secondary_length = getattr(allocated_size, self.SECONDARY_LENGTH)
 
-        for cell_id in xrange(len(cells)):
+        for cell_id in xrange(len(children)):
             cell_size = SizeAllocation((0, 0), (0, 0))
             setattr(cell_size, self.PRIMARY_COORD, primary_coords[cell_id])
             setattr(cell_size, self.SECONDARY_COORD, secondary_coord)
             setattr(cell_size, self.PRIMARY_LENGTH, primary_lengths[cell_id])
             setattr(cell_size, self.SECONDARY_LENGTH, secondary_length)
-            cells[cell_id].allocateSize(cell_size)
+            children[cell_id].allocateSize(cell_size)
 
-    def _allocateSizeInflate(self, allocated_size, cells):
+    def _allocateSizeInflate(self, allocated_size, children):
         """Performs the size allocation."""
-        # What is the length we can give to the cells ?  It's the allocated
+        # What is the length we can give to the children ?  It's the allocated
         # length minus the spacing.
         total_cell_length = getattr(allocated_size, self.PRIMARY_LENGTH)
-        total_cell_length -= self.spacing * (len(cells) - 1)
+        total_cell_length -= self.spacing * (len(children) - 1)
 
         # Compute an list of lengths, one length per cell: `lengths`.
         if self.is_homogeneous:
-            # The homogeneous case is easy: pretend that all the cells have
+            # The homogeneous case is easy: pretend that all the children have
             # requested the same length: the length of the longest cell. Then
             # apply an homothecy to make it fit the allocated size.
             max_length = 0
-            for cell in cells:
+            for cell in children:
                 length = getattr(cell.requested_size, self.PRIMARY_LENGTH)
                 if length > max_length:
                     max_length = length
-                lengths = [max_length] * len(cells)
+                lengths = [max_length] * len(children)
             unused, lengths = Homothecy(lengths, total_cell_length)
             del unused, max_length
         else:
@@ -342,13 +340,13 @@ class BoxLayout(Layout):
             # identify them.  We also need to compute the available space for
             # the expandable cells by removing the space claimed by the fixed
             # cells.
-            lengths = [0] * len(cells)
+            lengths = [0] * len(children)
             exp_ids = []
             exp_lengths = []
-            for cell_id, cell in enumerate(cells):
+            for cell_id, cell in enumerate(children):
                 length = getattr(cell.requested_size, self.PRIMARY_LENGTH)
-                if cell.isExpandable(self.PRIMARY_LENGTH):
-                    # Take note of expandable cells for homothecy.
+                if cell.canExpand(self.PRIMARY_LENGTH):
+                    # Take note of expandable children for homothecy.
                     exp_ids.append(cell_id)
                     exp_lengths.append(length)
                 else:
@@ -356,7 +354,7 @@ class BoxLayout(Layout):
                     lengths[cell_id] = length
             # Compute allocated length available for expandable cells.
             total_exp_length = total_cell_length - sum(lengths)
-            # Perform the homothecy on the expandable cells.
+            # Perform the homothecy on the expandable children.
             unused, exp_lengths = Homothecy(exp_lengths, total_exp_length)
             # Inject the result of the homothecy into the `lengths` list.
             for cell_id, length in zip(exp_ids, exp_lengths):
@@ -374,7 +372,7 @@ class BoxLayout(Layout):
         secondary_length = getattr(allocated_size, self.SECONDARY_LENGTH)
 
         # Finally, allocate the size of each cell.
-        for cell, primary_coord, primary_length in zip(cells, coords, lengths):
+        for cell, primary_coord, primary_length in zip(children, coords, lengths):
             cell_size = SizeAllocation((0, 0), (0, 0))
             setattr(cell_size, self.PRIMARY_COORD, primary_coord)
             setattr(cell_size, self.SECONDARY_COORD, secondary_coord)
@@ -382,53 +380,53 @@ class BoxLayout(Layout):
             setattr(cell_size, self.SECONDARY_LENGTH, secondary_length)
             cell.allocateSize(cell_size)
 
-    def _allocateSizeIdeal(self, allocated_size, cells):
+    def _allocateSizeIdeal(self, allocated_size, children):
         """Performs the size allocation."""
         # Secondary dimension is the same for everybody.
         secondary_length = getattr(allocated_size, self.SECONDARY_LENGTH)
         secondary_coord = getattr(allocated_size, self.SECONDARY_COORD)
 
-        # Homogeneous box: every cell gets the max primary.
-        # Heterogeneous box: every cell gets the primary it asked for.
+        # Homogeneous box: every child gets the max primary.
+        # Heterogeneous box: every child gets the primary it asked for.
         if self.is_homogeneous:
             primary_length = 0
-            for cell in cells:
-                cell_prim = getattr(cell.requested_size,
+            for child in children:
+                cell_prim = getattr(child.requested_size,
                                     self.PRIMARY_LENGTH)
                 if cell_prim > primary_length:
                     primary_length = cell_prim
         heterogeneous = not self.is_homogeneous
         primary_coord = getattr(allocated_size, self.PRIMARY_COORD)
-        for cell in cells:
+        for child in children:
             if heterogeneous:
-                primary_length = getattr(cell.requested_size,
+                primary_length = getattr(child.requested_size,
                                          self.PRIMARY_LENGTH)
             size_a = SizeAllocation((0, 0), (0, 0))
             setattr(size_a, self.PRIMARY_LENGTH, primary_length)
             setattr(size_a, self.SECONDARY_LENGTH, secondary_length)
             setattr(size_a, self.PRIMARY_COORD, primary_coord)
             setattr(size_a, self.SECONDARY_COORD, secondary_coord)
-            cell.allocateSize(size_a)
+            child.allocateSize(size_a)
             primary_coord += primary_length + self.spacing
 
-    def allocateSize(self, allocated_size, requested_size, cells):
+    def allocateSize(self, allocated_size, requested_size, children):
         """Allocate the size of the box.
 
-        Child widgets inflate or shrink by a factor proportional to their
-        requested size.
+        Children inflate or shrink by a factor proportional to their requested
+        size.
 
-        There is a difference between inflating and shrinking: not all widgets
-        can inflate (expand=False) but all can shrink.
+        There is a difference between inflating and shrinking: not all children
+        can inflate (can_expand_*=False) but all can shrink.
 
-        The ideal case, where all widgets get what they want, is no different
+        The ideal case, where all children get what they want, is no different
         from shrinking or inflating by a factor 1.
 
-        Note first that if no cell widget was added with expand=True, then
-        trying to allocate more size than what the BoxLayout requests is forbidden.
-        Doing so raises a size.SizeAllocationError.
+        Note first that if no child has can_expand_*=True, then trying to
+        allocate more size than what the BoxLayout requests is forbidden. Doing
+        so raises a size.SizeAllocationError.
 
         """
-        if not cells:
+        if not children:
             return
         allocated_primary = getattr(allocated_size, self.PRIMARY_LENGTH)
         allocated_secondary = getattr(allocated_size, self.SECONDARY_LENGTH)
@@ -439,30 +437,30 @@ class BoxLayout(Layout):
         #
         if allocated_primary > requested_primary:
             can_expand_primary = False
-            for cell in cells:
-                if cell.isExpandable(self.PRIMARY_LENGTH):
+            for cell in children:
+                if cell.canExpand(self.PRIMARY_LENGTH):
                     can_expand_primary = True
                     break
             if not can_expand_primary:
                 msg = "Cannot inflate a BoxLayout if no widget can expand."
-                raise BoxError(msg)
+                raise ExpandError(msg)
 
         if allocated_secondary > requested_secondary:
             can_expand_secondary = False
-            for cell in cells:
-                if cell.isExpandable(self.SECONDARY_LENGTH):
+            for cell in children:
+                if cell.canExpand(self.SECONDARY_LENGTH):
                     can_expand_secondary = True
                     break
             if not can_expand_secondary:
                 msg = "Cannot inflate a BoxLayout if no widget can expand."
-                raise BoxError(msg)
+                raise ExpandError(msg)
 
         if allocated_primary > requested_primary:
-            self._allocateSizeInflate(allocated_size, cells)
+            self._allocateSizeInflate(allocated_size, children)
         elif allocated_primary < requested_primary:
-            self._allocatedSizeShrink(allocated_size, cells)
+            self._allocatedSizeShrink(allocated_size, children)
         else:
-            self._allocateSizeIdeal(allocated_size, cells)
+            self._allocateSizeIdeal(allocated_size, children)
 
 class HBoxLayout(BoxLayout):
     """HBoxLayout layout places its children in a row."""

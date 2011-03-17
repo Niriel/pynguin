@@ -24,8 +24,8 @@ class TestContainer(unittest.TestCase):
         widget1 = MockWidget(10, 20)
         widget2 = MockWidget(30, 40)
         my_container = container.Container()
-        my_container.addChild(widget1, 'end', 'not', 'not')
-        my_container.addChild(widget2, 'end', 'not', 'not')
+        my_container.addChild(widget1, 'end')
+        my_container.addChild(widget2, 'end')
         #
         my_container._layout = MockLayout()
         my_container.requestSize(True)
@@ -53,12 +53,12 @@ class TestContainer(unittest.TestCase):
         widget2 = MockWidget(30, 40)
         my_container = container.Container()
         my_container.max_children = 1
-        my_container.addChild(widget1, 'end', 'not', 'not')
+        my_container.addChild(widget1, 'end')
         self.assertRaises(container.ContainerError,
                           my_container.addChild,
-                          widget2, 'end', 'not', 'not')
+                          widget2, 'end')
         my_container.max_children = -1 # No limit.
-        my_container.addChild(widget2, 'end', 'not', 'not')
+        my_container.addChild(widget2, 'end')
 
 if __name__ == "__main__":
     unittest.main()

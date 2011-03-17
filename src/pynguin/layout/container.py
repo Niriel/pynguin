@@ -6,7 +6,6 @@ Created on Nov 4, 2010
 
 import sizeable
 import parentable
-from cell import Cell
 
 
 __all__ = ['Container', 'ContainerError']
@@ -63,45 +62,18 @@ class Container(sizeable.Sizeable, parentable.Parentable):
     def __init__(self, max_children=-1):
         """Initialize a new Container object.
 
-        Upon creation, the container initializes a list of cells::
+        Upon creation, the container initializes a list of children::
 
             >>> container = Container()
-            >>> print container.cells
+            >>> print container.children
             []
 
         """
         sizeable.Sizeable.__init__(self)
         parentable.Parentable.__init__(self)
         self._layout = None
-        self.cells = []
+        self.children = []
         self.max_children = max_children
-
-    def __iter__(self):
-        """Create an iterator over the children.
-
-        Containers can create iterators over their children.
-
-        Here is an example of a container used in a for loop::
-
-            >>> from parentable import Parentable
-            >>> container = Container()
-            >>> children = [Parentable() for i in range(3)]
-            >>> for child in children:
-            ...     container.addChild(child, 'end', 'padding', 'padded', 8)
-            >>> for child1, child2 in zip(children, container):
-            ...     print child1 is child2
-            True
-            True
-            True
-
-        To iterate over the cells, use container.cells.
-
-        As usual it is dangerous to modify the list of cells while iterating
-        over it.
-
-        """
-        for cell in self.cells:
-            yield cell.padded
 
     def __contains__(self, element):
         """Return True if element is a child of the container, False otherwise.
@@ -125,7 +97,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             >>> from parentable import Parentable
             >>> container = Container()
             >>> element = Parentable()
-            >>> container.addChild(element, 'end', 'not', 'not')
+            >>> container.addChild(element, 'end')
             >>> print element in container
             True
 
@@ -140,7 +112,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
             >>> container = Container()
             >>> element = Parentable()
-            >>> container.addChild(element, 'end', 'not', 'not')
+            >>> container.addChild(element, 'end')
             >>> element.parent = None  # Introduce inconsistency.
             >>> print element in container
             Traceback (most recent call last):
@@ -157,7 +129,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
         """
         is_parent_ok = element.parent is self
-        is_child_ok = element in list(self)
+        is_child_ok = element in self.children
         if is_parent_ok:
             if is_child_ok:
                 return True
@@ -174,7 +146,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
     def _requestSize(self):
         """Defers the size requisition to the layout."""
-        return self._layout.requestSize(self.cells)
+        return self._layout.requestSize(self.children)
 
     def requestSize(self, forward_request):
         """Compute the requested size and stores it.
@@ -199,38 +171,34 @@ class Container(sizeable.Sizeable, parentable.Parentable):
           be useful for optimizing.
 
         """
-        for cell in self.cells:
-            # Always call requestSize on cells.  That is because when a widget
-            # is modified (Label becomes bigger because more text in it for
-            # example), the cell containing the widget is not aware of the
-            # modification.  But if you don't want the cell to recompute the
-            # size of its padded then it won't.
-            cell.requestSize(forward_request)
+        if forward_request:
+            for child in self.children:
+                child.requestSize(forward_request)
         sizeable.Sizeable.requestSize(self, forward_request)
 
     def _allocateSize(self):
         """Defers the size allocation to the layout."""
         self._layout.allocateSize(self.allocated_size,
                                   self.requested_size,
-                                  self.cells)
+                                  self.children)
 
-    def _insertCellIndex(self, cell, index):
-        """Insert cell into cells at the position index.
+    def _insertChildIndex(self, child, index):
+        """Insert child into children at the position index.
 
-        Called by insertCell.
+        Called by _insertChild.
 
-        If index is out of the list of cells, IndexError is raised.
+        If index is out of the list of children, IndexError is raised.
 
         """
-        if 0 <= index < len(self.cells):
-            self.cells.insert(index, cell)
+        if 0 <= index < len(self.children):
+            self.children.insert(index, child)
         else:
             raise IndexError('list index out of range')
 
-    def _insertCellBeforeOrAfter(self, cell, child, offset):
-        """Insert cell before or after the cell containing child.
+    def _insertChildBeforeOrAfter(self, child, ref_child, offset):
+        """Insert child before or after ref_child.
 
-        Called by insertCell.
+        Called by _insertChild.
 
         offset = 0 to insert before,
         offset = 1 to insert after.
@@ -238,65 +206,65 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         If the child is not in the container, NotAChildError is raised.
 
         """
-        if child in self:
-            index = list(self).index(child) + offset
-            self.cells.insert(index, cell)
-        else:
+        try:
+            index = self.children.index(ref_child)
+        except ValueError:
             msg = "Reference element is not a child of that container."
             raise NotAChildError(msg)
+        self.children.insert(index + offset, child)
+            
 
-    def insertCell(self, cell, where):
-        """Insert a cell in cells at the position described by where.
+    def _insertChild(self, child, where):
+        """Insert a child in children at the position described by where.
 
         Parameters:
 
-        * `cell`: the cell to insert;
+        * `child`: the child to insert;
         * `where`: describes the position where the insertion must take place.
 
         `where` can have several values, either string or
         tuple(string, object):
 
-        * 'beginning': the cell is inserted at the beginning of the list.
-        * 'end': the cell is inserted at the end of the list.
-        * ('index', int): the cell is inserted at the position indexed by the
+        * 'beginning': the child is inserted at the beginning of the list.
+        * 'end': the child is inserted at the end of the list.
+        * ('index', int): the child is inserted at the position indexed by the
           given integer.
-        * ('before', child): the cell is inserted before the cell that contains
+        * ('before', child): the child is inserted before the child that contains
           the given child.
-        * ('after', child): the cell is inserted after the cell that contains
+        * ('after', child): the child is inserted after the child that contains
           the given child.
 
         Insertion with where='beginning'::
 
-            >>> from cell import Cell
             >>> from parentable import Parentable
             >>> container = Container()
-            >>> cell1 = Cell(Parentable(), 'not', 'not')
-            >>> cell2 = Cell(Parentable(), 'not', 'not')
-            >>> container.insertCell(cell1, 'beginning')
-            >>> container.insertCell(cell2, 'beginning')
-            >>> print container.cells == [cell2, cell1]
+            >>> child1 = Parentable()
+            >>> child2 = Parentable()
+            >>> container._insertChild(child1, 'beginning')
+            >>> container._insertChild(child2, 'beginning')
+            >>> print container.children == [child2, child1]
             True
 
         Insertion with where='end'::
 
             >>> container = Container()
-            >>> cell1 = Cell(Parentable(), 'not', 'not')
-            >>> cell2 = Cell(Parentable(), 'not', 'not')
-            >>> container.insertCell(cell1, 'end')
-            >>> container.insertCell(cell2, 'end')
-            >>> print container.cells == [cell1, cell2]
+            >>> child1 = Parentable()
+            >>> child2 = Parentable()
+            >>> container._insertChild(child1, 'end')
+            >>> container._insertChild(child2, 'end')
+            >>> print container.children == [child1, child2]
             True
 
         Insertion with where=('index', 1)::
 
             >>> container = Container()
-            >>> cell1 = Cell(Parentable(), 'not', 'not')
-            >>> cell2 = Cell(Parentable(), 'not', 'not')
-            >>> cell3 = Cell(Parentable(), 'not', 'not')
-            >>> container.insertCell(cell1, 'end')
-            >>> container.insertCell(cell2, 'end')
-            >>> container.insertCell(cell3, ('index', 1))
-            >>> print container.cells == [cell1, cell3, cell2]
+            >>> child1 = Parentable()
+            >>> child2 = Parentable()
+            >>> child3 = Parentable()
+            >>> container._insertChild(child1, 'end')
+            >>> container._insertChild(child2, 'end')
+            >>> container._insertChild(child3, ('index', 1))
+            >>> print container.children == [child1, child3, child2]
             True
 
         Insertion with where=('before', child)::
@@ -308,13 +276,10 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             >>> child1.parent = container
             >>> child2.parent = container
             >>> child3.parent = container
-            >>> cell1 = Cell(child1, 'not', 'not')
-            >>> cell2 = Cell(child2, 'not', 'not')
-            >>> cell3 = Cell(child3, 'not', 'not')
-            >>> container.insertCell(cell1, 'end')
-            >>> container.insertCell(cell2, 'end')
-            >>> container.insertCell(cell3, ('before', child2))
-            >>> print container.cells == [cell1, cell3, cell2]
+            >>> container._insertChild(child1, 'end')
+            >>> container._insertChild(child2, 'end')
+            >>> container._insertChild(child3, ('before', child2))
+            >>> print container.children == [child1, child3, child2]
             True
 
         Insertion with where=('after', child)::
@@ -326,35 +291,32 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             >>> child1.parent = container
             >>> child2.parent = container
             >>> child3.parent = container
-            >>> cell1 = Cell(child1, 'not', 'not')
-            >>> cell2 = Cell(child2, 'not', 'not')
-            >>> cell3 = Cell(child3, 'not', 'not')
-            >>> container.insertCell(cell1, 'end')
-            >>> container.insertCell(cell2, 'end')
-            >>> container.insertCell(cell3, ('after', child1))
-            >>> print container.cells == [cell1, cell3, cell2]
+            >>> container._insertChild(child1, 'end')
+            >>> container._insertChild(child2, 'end')
+            >>> container._insertChild(child3, ('after', child1))
+            >>> print container.children == [child1, child3, child2]
             True
 
         If the where construct is invalid, an InvalidWhereContstructError is
         raised::
 
             >>> container = Container()
-            >>> cell1 = Cell(Parentable(), 'not', 'not')
-            >>> container.insertCell(cell1, 'wrong')
+            >>> child1 = Parentable()
+            >>> container._insertChild(child1, 'wrong')
             Traceback (most recent call last):
             ...
-            InvalidWhereContstructError: Parameter where is invalid, please refer to the documentation of container.insertCell.
-            >>> container.insertCell(cell1, ('wrong', 45))
+            InvalidWhereContstructError: Parameter where is invalid, please refer to the documentation of container._insertChild.
+            >>> container._insertChild(child1, ('wrong', 45))
             Traceback (most recent call last):
             ...
-            InvalidWhereContstructError: Parameter where is invalid, please refer to the documentation of container.insertCell.
+            InvalidWhereContstructError: Parameter where is invalid, please refer to the documentation of container._insertChild.
 
         If the integer given in the where=('index', integer) is out of bound,
         then IndexError is raised::
 
             >>> container = Container()
-            >>> cell1 = Cell(Parentable(), 'not', 'not')
-            >>> container.insertCell(cell1, ('index', 42))
+            >>> child1 = Parentable()
+            >>> container._insertChild(child1, ('index', 42))
             Traceback (most recent call last):
             ...
             IndexError: list index out of range
@@ -364,49 +326,46 @@ class Container(sizeable.Sizeable, parentable.Parentable):
 
             >>> container = Container()
             >>> child1 = Parentable()
-            >>> cell2 = Cell(Parentable(), 'not', 'not')
-            >>> container.insertCell(cell2, ('before', child1))
+            >>> child2 = Parentable()
+            >>> container._insertChild(child2, ('before', child1))
             Traceback (most recent call last):
             ...
             NotAChildError: Reference element is not a child of that container.
 
         """
         if where == 'end':
-            self.cells.append(cell)
+            self.children.append(child)
             return
         elif where == 'beginning':
-            self.cells.insert(0, cell)
+            self.children.insert(0, child)
             return
 
         if not isinstance(where, tuple):
             msg = "Parameter where is invalid, please refer to the " \
-                  "documentation of container.insertCell."
+                  "documentation of container._insertChild."
             raise InvalidWhereContstructError(msg)
 
         key, value = where
         if key == 'index':
-            self._insertCellIndex(cell, value)
+            self._insertChildIndex(child, value)
         elif key == 'before':
-            self._insertCellBeforeOrAfter(cell, value, 0)
+            self._insertChildBeforeOrAfter(child, value, 0)
         elif key == 'after':
-            self._insertCellBeforeOrAfter(cell, value, 1)
+            self._insertChildBeforeOrAfter(child, value, 1)
         else:
             msg = "Parameter where is invalid, please refer to the " \
-                  "documentation of container.insertCell."
+                  "documentation of container._insertChild."
             raise InvalidWhereContstructError(msg)
 
-    def addChild(self, child, where, expand_width, expand_height, *padding):
+    def addChild(self, child, where):
         """Add child to the container.
 
         Parameters.
         ===========
 
         - child: the child to add.
-        - where: a description of the position within the list of cells where
+        - where: a description of the position within the list of children where
           the cell for child must be inserted.
-        - expand_width: 'not', 'padding' or 'padded'.
-        - expand_height: 'not', 'padding' or 'padded'.
-        - padding: a Padding object or 1, 2 or 4 integers.
 
         Parameter `where`.
         ------------------
@@ -429,45 +388,30 @@ class Container(sizeable.Sizeable, parentable.Parentable):
         * NotAChildError: the given reference child is not in the container.
         * InvalidWhereContstructError: incorrect tuple or string.
 
-        Please read the documentation of the method insertCell for more details
+        Please read the documentation of the method _insertChild for more details
         on the `where` parameter.
-
-        Parameters expand_* and padding.
-        --------------------------------
-
-        For expand_width, expand_height and padding, please refer to the
-        documentation of Cell.
 
         Examples.
         =========
 
-        Adding a child to a container creates a cell for that child with
-        the requested padding::
-
+        ::
+        
             >>> from parentable import Parentable
             >>> container = Container()
             >>> children = [Parentable() for i in range(3)]
             >>> for child in children:
-            ...     container.addChild(child, 'end', 'padding', 'padded', 8)
-            >>> len(container.cells)
+            ...     container.addChild(child, 'end')
+            >>> len(container.children)
             3
             >>> children[1] in container
             True
             >>> children[1].parent is container
             True
-            >>> container.cells[0].padded is children[0]
-            True
-            >>> print repr(container.cells[1].padding)
-            Padding(8, 8, 8, 8)
-            >>> print container.cells[2].expand_width
-            padding
-            >>> print container.cells[1].expand_height
-            padded
 
         Adding a child that has no `parent` attribute raises an exception::
 
             >>> container = Container()
-            >>> container.addChild('whatever', 'end', 'not', 'not')
+            >>> container.addChild('whatever', 'end')
             Traceback (most recent call last):
             ...
             NoParentError: 'whatever' has no 'parent' attribute.  Make sure it inherits from Parentable.
@@ -479,14 +423,14 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             >>> container2 = Container()
             >>> child = Parentable()
             >>> child.parent = container1  # Never do that, use addChild.
-            >>> container2.addChild(child, 'end', 'not', 'not')
+            >>> container2.addChild(child, 'end')
             Traceback (most recent call last):
             ...
             AlreadyParentError: Child already has a parent and cannot be added to this container.
 
         """
         if self.max_children > -1:
-            if len(self.cells) >= self.max_children:
+            if len(self.children) >= self.max_children:
                 msg = "Container capacity exceeded."
                 raise ContainerError(msg)
         if not hasattr(child, 'parent'):
@@ -498,8 +442,7 @@ class Container(sizeable.Sizeable, parentable.Parentable):
                   "container."
             raise parentable.AlreadyParentError(msg)
 
-        cell = Cell(child, expand_width, expand_height, *padding)
-        self.insertCell(cell, where)
+        self._insertChild(child, where)
         child.parent = self # Keep that for the end in case of failure above.
 
     def removeChild(self, child):
@@ -517,20 +460,20 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             ...
             ContainerError: Element is not a child of that container and cannot be removed.
 
-        The child disappears from the list of cells and loses its parent::
+        The child disappears from the list of children and loses its parent::
 
             >>> container = Container()
             >>> children = [Parentable() for i in range(3)]
             >>> for child in children:
-            ...     container.addChild(child, 'end', 'not', 'not')
-            >>> len(container.cells)
+            ...     container.addChild(child, 'end')
+            >>> len(container.children)
             3
             >>> children[1] in container
             True
             >>> children[1].parent is container
             True
             >>> container.removeChild(children[1])
-            >>> len(container.cells)
+            >>> len(container.children)
             2
             >>> children[1] in container
             False
@@ -538,12 +481,11 @@ class Container(sizeable.Sizeable, parentable.Parentable):
             None
 
         """
-        if child in self:
-            children = list(self)
-            index = children.index(child)
-            del self.cells[index]
-            child.parent = None
-        else:
+        try:
+            self.children.remove(child)
+        except ValueError:
             msg = "Element is not a child of that container and cannot be " \
                   "removed."
             raise ContainerError(msg)
+        else:
+            child.parent = None

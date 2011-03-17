@@ -22,12 +22,11 @@ class MockWidget(Sizeable, Parentable):
         self.height = height
         self.requested_size = None
         self.allocated_size = None
-    def requestSize(self, forward_request):
+    def _requestSize(self):
         """Return the size given to the constructor."""
-        self.requested_size = Size(self.width, self.height)
-    def allocateSize(self, allocated_size):
-        """Store the allocated size."""
-        self.allocated_size = allocated_size
+        return Size(self.width, self.height)
+    def _allocateSize(self):
+        """Nothing, it's a mock."""
 
 class MockLayout(Layout):
     """A pseudo container layout implementing just what I need for tests."""

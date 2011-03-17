@@ -10,6 +10,12 @@ from size import SizeAllocation
 class SizeableError(RuntimeError):
     """Base error raised by the sizeable module."""
 
+class SizeAllocationError(SizeableError):
+    """Something when wrong when allocating the size."""
+
+class ExpandError(SizeAllocationError):
+    """Sizeable was expanded against its will."""
+
 class Sizeable(object):
     """Object that can have its size negociated."""
     def __init__(self):
@@ -28,6 +34,17 @@ class Sizeable(object):
         self.requested_size = None
         self.allocated_size = None
         self.forced_requested_size = None
+        self.can_expand_width = True
+        self.can_expand_height = True
+
+    def canExpand(self, direction):
+        """Return can_expand_<direction>.
+
+        direction: string "width" or "height".
+
+        """
+        attribute_name = 'can_expand_%s' % direction
+        return getattr(self, attribute_name)
 
     def _requestSize(self):
         """Compute the requested size and returns it.
@@ -83,10 +100,9 @@ class Sizeable(object):
         False
 
         """
+        self.requested_size = self._requestSize()
         if self.forced_requested_size:
             self.requested_size = self.forced_requested_size.copy()
-        else:
-            self.requested_size = self._requestSize()
 
     def _allocateSize(self):
         """Proceed to the size allocation.
@@ -128,10 +144,17 @@ class Sizeable(object):
         * The user should never call `_allocateSize` and should only call
           `allocateSize`.
 
-        >>> def doNothing():print "_allocateSize called."
         >>> import size
-        >>> s = Sizeable()
-        >>> s._allocateSize = doNothing # Remove the NotImplementedError.
+        >>> class MockWidget(Sizeable):
+        ...     def _requestSize(self):
+        ...         print "_requestSize called."
+        ...         return size.Size(10, 20)
+        ...     def _allocateSize(self):
+        ...         print "_allocateSize called."
+        >>> import size
+        >>> s = MockWidget()
+        >>> s.requestSize(True) # Always call requestSize before alloc.
+        _requestSize called.
         >>> sa = size.SizeAllocation((1, 2), (3, 4))
         >>> s.allocateSize(sa)
         _allocateSize called.
@@ -145,6 +168,14 @@ class Sizeable(object):
         False
 
         """
+        if not self.requested_size:
+            raise SizeableError("Please call requestSize before allocateSize.")
+        if not self.can_expand_width:
+            if allocated_size.width > self.requested_size.width:
+                raise ExpandError()
+        if not self.can_expand_height:
+            if allocated_size.height > self.requested_size.height:
+                raise ExpandError() 
         self.allocated_size = allocated_size.copy()
         self._allocateSize()
 

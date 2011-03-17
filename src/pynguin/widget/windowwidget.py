@@ -25,8 +25,8 @@ class WindowWidget(ContainerWidget):
 
         """
         self.setDisplayer(displayer)
-        for cell in self.cells:
-            cell.padded.dispatchDisplayers(self)
+        for child in self.children:
+            child.dispatchDisplayers(self)
 
     def addSprite(self, sprite, layer):
         """Add the given sprite to window sprite."""
